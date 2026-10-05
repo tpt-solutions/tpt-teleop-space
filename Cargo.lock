@@ -273,11 +273,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-t-space-ccsds"
+version = "0.1.0"
+
+[[package]]
 name = "tpt-t-space-core"
 version = "0.1.0"
 dependencies = [
  "bytecheck",
  "rkyv",
+]
+
+[[package]]
+name = "tpt-t-space-radiation"
+version = "0.1.0"
+dependencies = [
+ "tpt-t-space-core",
 ]
 
 [[package]]

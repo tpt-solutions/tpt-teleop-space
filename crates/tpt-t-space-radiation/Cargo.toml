@@ -1,0 +1,19 @@
+[package]
+name = "tpt-t-space-radiation"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Software radiation tolerance for tpt-teleop-space: Hamming(72,64) memory scrubbing with CRC32 region walk, <50µs TMR voter, and SEU detection/recovery bookkeeping"
+
+[dependencies]
+tpt-t-space-core = { workspace = true }
+
+[[bench]]
+name = "tmr"
+harness = false
+
+[lints]
+workspace = true

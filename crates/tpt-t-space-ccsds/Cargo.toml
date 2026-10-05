@@ -1,0 +1,14 @@
+[package]
+name = "tpt-t-space-ccsds"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Zero-allocation, zero-copy CCSDS Space Packet / TM / TC parsers for tpt-teleop-space"
+
+# No dependencies: parsing is borrowed views over caller-owned bytes.
+
+[lints]
+workspace = true
