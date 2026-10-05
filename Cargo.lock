@@ -285,6 +285,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-t-space-dtn"
+version = "0.1.0"
+dependencies = [
+ "bytecheck",
+ "rkyv",
+ "tpt-t-space-core",
+]
+
+[[package]]
 name = "tpt-t-space-radiation"
 version = "0.1.0"
 dependencies = [
