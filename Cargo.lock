@@ -294,7 +294,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-t-space-power"
+version = "0.1.0"
+dependencies = [
+ "tpt-t-space-core",
+]
+
+[[package]]
+name = "tpt-t-space-predictive"
+version = "0.1.0"
+dependencies = [
+ "tpt-t-space-core",
+]
+
+[[package]]
 name = "tpt-t-space-radiation"
+version = "0.1.0"
+dependencies = [
+ "tpt-t-space-core",
+]
+
+[[package]]
+name = "tpt-t-space-thermal"
 version = "0.1.0"
 dependencies = [
  "tpt-t-space-core",

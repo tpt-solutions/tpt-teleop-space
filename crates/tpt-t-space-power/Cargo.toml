@@ -1,0 +1,15 @@
+[package]
+name = "tpt-t-space-power"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Power subsystem management for tpt-teleop-space: solar array pointing, battery cycle tracking, eclipse load shedding, and the dust-storm survival trigger"
+
+[dependencies]
+tpt-t-space-core = { workspace = true }
+
+[lints]
+workspace = true

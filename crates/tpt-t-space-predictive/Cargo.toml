@@ -1,0 +1,19 @@
+[package]
+name = "tpt-t-space-predictive"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Onboard predictive autonomy for tpt-teleop-space: bounded MPC, stereo DEM generation, candidate-trajectory path planning, and the reusable autonomous decision framework"
+
+[[bench]]
+name = "replan"
+harness = false
+
+[dependencies]
+tpt-t-space-core = { workspace = true }
+
+[lints]
+workspace = true
