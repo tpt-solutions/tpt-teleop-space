@@ -1,0 +1,66 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+# `tpt-t-space-satellite` and `tpt-t-space-rover` require nightly
+# (`#![feature(portable_simd)]`) and are excluded from the default stable
+# workspace build. Each carries its own crate-local `rust-toolchain.toml`
+# and is built by a dedicated nightly CI job (see `.github/workflows/ci.yml`);
+# the rest of the workspace, including the safety-critical crates, stays on
+# stable Rust.
+# `tpt-t-space-visualizer` is excluded because the egui/winit dependency
+# chain sits outside the strict MIT-chain `deny.toml` policy that workspace
+# members are audited under; it builds in isolation with its own CI job.
+exclude = [
+    "crates/tpt-t-space-satellite",
+    "crates/tpt-t-space-rover",
+    "crates/tpt-t-space-visualizer",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+authors = ["TPT Solutions"]
+repository = "https://github.com/tpt-solutions/tpt-teleop-space"
+homepage = "https://tpt.solutions/tpt-teleop-space"
+documentation = "https://docs.rs/tpt-t-space-core"
+
+[workspace.lints.rust]
+unsafe_op_in_unsafe_fn = "warn"
+
+[workspace.lints.clippy]
+undocumented_unsafe_blocks = "warn"
+
+[workspace.dependencies]
+# Internal crates
+tpt-t-domain-bridge = { path = "crates/tpt-t-domain-bridge" }
+tpt-t-space-core = { path = "crates/tpt-t-space-core" }
+tpt-t-space-radiation = { path = "crates/tpt-t-space-radiation" }
+tpt-t-space-ccsds = { path = "crates/tpt-t-space-ccsds" }
+tpt-t-space-dtn = { path = "crates/tpt-t-space-dtn" }
+tpt-t-space-thermal = { path = "crates/tpt-t-space-thermal" }
+tpt-t-space-power = { path = "crates/tpt-t-space-power" }
+tpt-t-space-predictive = { path = "crates/tpt-t-space-predictive" }
+tpt-t-space-orbital = { path = "crates/tpt-t-space-orbital" }
+tpt-t-space-edge = { path = "crates/tpt-t-space-edge" }
+tpt-t-space-teleop = { path = "crates/tpt-t-space-teleop" }
+tpt-t-space-sim = { path = "crates/tpt-t-space-sim" }
+# Excluded crates are referenced by path from dependents that need their
+# types at compile time of this workspace (none today: satellite/rover are
+# leaf producers consumed via the core wire prelude).
+
+# Platform (all dual MIT OR Apache-2.0 — see deny.toml MIT-chain policy).
+# Members gate these behind [target.'cfg(...)'.dependencies] as needed;
+# deny.toml audits them on every CI target regardless of host OS.
+rkyv = { version = "0.8", features = ["bytecheck"] }
+bytecheck = "0.8"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+debug = true
+
+[profile.bench]
+inherits = "release"

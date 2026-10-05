@@ -1,0 +1,9 @@
+[toolchain]
+# Default to stable. The whole workspace builds on stable except
+# `tpt-t-space-satellite` (SIMD-accelerated MEKF) and `tpt-t-space-rover`
+# (SIMD path planning / VIO), which require a nightly toolchain for
+# `#![feature(portable_simd)]`. Those crates carry their own
+# `rust-toolchain.toml` (crate-local override) and are built by dedicated
+# nightly-only CI jobs; see `.github/workflows/ci.yml`.
+channel = "stable"
+components = ["rustfmt", "clippy"]

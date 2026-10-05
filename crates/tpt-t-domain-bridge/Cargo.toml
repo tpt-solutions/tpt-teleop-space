@@ -1,0 +1,16 @@
+[package]
+name = "tpt-t-domain-bridge"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Domain Teleoperation Interface (DTI): universal wire types, safety state machine, and teleop-assist API shared by every tpt-teleop domain repo"
+
+[dependencies]
+rkyv = { workspace = true, features = ["bytecheck"] }
+bytecheck = "0.8"
+
+[lints]
+workspace = true

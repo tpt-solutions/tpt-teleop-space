@@ -1,0 +1,100 @@
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  build-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build (workspace)
+        run: cargo build --workspace --all-targets
+      - name: Test (workspace)
+        run: cargo test --workspace
+
+  cross-check:
+    # Compile-check every cfg-gated backend regardless of host OS
+    # (includes the `no_std` edge crate's host-side cfg surface).
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-apple-darwin
+          - x86_64-pc-windows-msvc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Check (${{ matrix.target }})
+        run: cargo check --workspace --all-targets --target ${{ matrix.target }}
+
+  edge-baremetal:
+    # Phase 11: `tpt-t-space-edge` is `#![no_std]`; prove it builds for a
+    # bare-metal space-grade-adjacent target with no std underneath.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-none-softfloat
+      - name: Build (tpt-t-space-edge, aarch64-unknown-none-softfloat)
+        run: cargo build -p tpt-t-space-edge --target aarch64-unknown-none-softfloat
+
+  satellite-nightly:
+    # Phase 8 crate `tpt-t-space-satellite` is excluded from the stable
+    # workspace and built in isolation on nightly (portable_simd). Rest of
+    # the workspace stays on stable.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Build (tpt-t-space-satellite, nightly)
+        run: cargo build --manifest-path crates/tpt-t-space-satellite/Cargo.toml --all-targets
+      - name: Test (tpt-t-space-satellite, nightly)
+        run: cargo test --manifest-path crates/tpt-t-space-satellite/Cargo.toml
+
+  rover-nightly:
+    # Phase 9 crate `tpt-t-space-rover` is excluded from the stable
+    # workspace and built in isolation on nightly (portable_simd). Rest of
+    # the workspace stays on stable.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Build (tpt-t-space-rover, nightly)
+        run: cargo build --manifest-path crates/tpt-t-space-rover/Cargo.toml --all-targets
+      - name: Test (tpt-t-space-rover, nightly)
+        run: cargo test --manifest-path crates/tpt-t-space-rover/Cargo.toml
+
+  visualizer:
+    # Phase 13 visualizer builds in isolation (egui chain is outside the
+    # workspace MIT-chain deny scope; see root Cargo.toml `exclude`).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build (tpt-t-space-visualizer)
+        run: cargo build --manifest-path crates/tpt-t-space-visualizer/Cargo.toml

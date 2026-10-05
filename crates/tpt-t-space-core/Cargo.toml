@@ -1,0 +1,16 @@
+[package]
+name = "tpt-t-space-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Core foundation for tpt-teleop-space: mission state machine, lock-free message bus, central event loop, persistent snapshots, and the shared rkyv wire-type prelude"
+
+[dependencies]
+rkyv = { workspace = true }
+bytecheck = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,169 @@
+# cargo-deny configuration — the "MIT Chain" policy (spec §2)
+#
+# tpt-teleop-space keeps its dependency tree free of Apache-only patent
+# liabilities, mirroring the sister `tpt-teleop` repo:
+#   * Allowed: MIT, BSD-2/3-Clause, ISC, Zlib, MPL-2.0 (and Unicode font/data
+#     licenses for embedded Unicode tables, which are BSD-style permissive).
+#   * Dual MIT OR Apache-2.0 crates are permitted, but cargo resolves and
+#     compiles them strictly under MIT via the [[licenses.clarify]] overrides
+#     below. New dual-licensed transitive deps MUST be added here.
+#   * Strictly Apache-2.0-only crates are banned outright.
+#
+# Spec §7 additionally bans by *function* (enforced below in `[bans]` and in
+# review + the Phase 14 audit): nalgebra/ndarray, heavy CCSDS libraries,
+# tokio/crossbeam, serde/bincode and graph/geo stacks must never enter the
+# tree — the custom zero-allocation choices replace them.
+
+[graph]
+all-features = true
+# Check every CI target from one invocation so platform-gated deps
+# are always audited.
+targets = [
+    { triple = "x86_64-unknown-linux-gnu" },
+    { triple = "aarch64-apple-darwin" },
+    { triple = "x86_64-pc-windows-msvc" },
+]
+
+[licenses]
+version = 2
+allow = [
+    "MIT",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "MPL-2.0",
+    # BSD-style permissive licenses used solely for embedded Unicode tables
+    "Unicode-DFS-2016",
+    "Unicode-3.0",
+]
+# With a non-empty `allow` list, every other license (including Apache-2.0-
+# only crates) is rejected automatically — that is the MIT-chain ban.
+confidence-threshold = 0.93
+
+# --- Force-MIT resolution for dual MIT OR Apache-2.0 crates -----------------
+# Each entry pins the crate to its MIT branch so the Apache-2.0 grant is
+# never relied upon. Keep alphabetized; extend when new deps appear.
+
+[[licenses.clarify]]
+name = "rkyv"
+expression = "MIT"
+license-files = []
+
+
+[[licenses.clarify]]
+name = "rkyv_derive"
+expression = "MIT"
+license-files = []
+
+
+[[licenses.clarify]]
+name = "bytecheck"
+expression = "MIT"
+license-files = []
+
+
+[[licenses.clarify]]
+name = "bytecheck_derive"
+expression = "MIT"
+license-files = []
+
+
+[[licenses.clarify]]
+name = "ptr_meta"
+expression = "MIT"
+license-files = []
+
+
+[[licenses.clarify]]
+name = "ptr_meta_derive"
+expression = "MIT"
+license-files = []
+
+
+[[licenses.clarify]]
+name = "rend"
+expression = "MIT"
+license-files = []
+
+
+[[licenses.clarify]]
+name = "rancor"
+expression = "MIT"
+license-files = []
+
+
+[[licenses.clarify]]
+name = "simdnob"
+expression = "MIT"
+license-files = []
+
+
+[[licenses.clarify]]
+name = "proc-macro2"
+expression = "MIT"
+license-files = []
+
+
+[[licenses.clarify]]
+name = "quote"
+expression = "MIT"
+license-files = []
+
+
+[[licenses.clarify]]
+name = "syn"
+expression = "MIT"
+license-files = []
+
+
+[[licenses.clarify]]
+name = "unicode-ident"
+expression = "MIT"
+license-files = []
+
+
+[bans]
+multiple-versions = "warn"
+# The workspace's own crates interconnect via path deps (no version) —
+# that is the co-development story, not bloat; third-party wildcard
+# requirements stay banned in review.
+wildcards = "allow"
+highlight = "all"
+
+# Spec §7 dependency matrix, enforced mechanically: these are the
+# "Standard Ecosystem (Banned/Avoided)" crates the custom zero-allocation
+# choices replace. Anything heavy enough to drag an Apache-only or
+# allocation-heavy stack in behind it (nalgebra→matrixmultiply, tokio→mio…)
+# is caught at the roots listed here.
+deny = [
+    # ADCS / math stacks that allocate (custom SIMD quaternion/MEKF instead)
+    { name = "nalgebra" },
+    { name = "ndarray" },
+    { name = "matrixmultiply" },
+    # Async runtime / channel stacks (custom lock-free rings instead)
+    { name = "tokio" },
+    { name = "crossbeam" },
+    { name = "crossbeam-channel" },
+    # Serialization (rkyv zero-copy instead)
+    { name = "serde" },
+    { name = "bincode" },
+    # Heavy CCSDS / space-protocol libraries (custom zero-copy parser instead)
+    { name = "ccsdsspacepackets" },
+    { name = "rumqttc" },
+    # Graph/geo planning stacks (custom SIMD A*/D* Lite instead)
+    { name = "petgraph" },
+    { name = "geo" },
+    { name = "geo-types" },
+    # Randomness (deterministic xorshift in-tree instead)
+    { name = "rand" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+
+[advisories]
+version = 2
+yanked = "warn"
