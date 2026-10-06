@@ -294,6 +294,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-t-space-edge"
+version = "0.1.0"
+
+[[package]]
 name = "tpt-t-space-orbital"
 version = "0.1.0"
 dependencies = [
