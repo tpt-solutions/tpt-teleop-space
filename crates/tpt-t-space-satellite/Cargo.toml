@@ -1,0 +1,23 @@
+[package]
+name = "tpt-t-space-satellite"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+authors = ["TPT Solutions"]
+repository = "https://github.com/tpt-solutions/tpt-teleop-space"
+description = "Attitude Determination and Control System for tpt-teleop-space: SIMD-accelerated MEKF, reaction wheels, momentum dumping, formation flying (nightly-only)"
+
+[dependencies]
+tpt-t-space-core = { path = "../tpt-t-space-core" }
+tpt-t-space-radiation = { path = "../tpt-t-space-radiation" }
+
+[[bench]]
+name = "adcs"
+harness = false
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "warn"
+
+[lints.clippy]
+undocumented_unsafe_blocks = "warn"
