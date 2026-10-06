@@ -1,0 +1,7 @@
+[toolchain]
+# This crate requires a nightly toolchain for `#![feature(portable_simd)]`
+# (SIMD vector math in the VIO pipeline). It is excluded from the stable
+# parent workspace (see the root Cargo.toml `exclude`) and is built in
+# isolation by the dedicated `rover-nightly` CI job.
+channel = "nightly"
+components = ["rustfmt", "clippy"]

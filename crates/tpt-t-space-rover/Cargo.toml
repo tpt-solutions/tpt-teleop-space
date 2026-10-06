@@ -1,0 +1,19 @@
+[package]
+name = "tpt-t-space-rover"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+authors = ["TPT Solutions"]
+repository = "https://github.com/tpt-solutions/tpt-teleop-space"
+description = "Planetary surface operations for tpt-teleop-space: wheel/VIO odometry, autonomous hazard avoidance, science sequencing with rollback, wheel health (nightly-only)"
+
+[dependencies]
+tpt-t-space-core = { path = "../tpt-t-space-core" }
+tpt-t-space-predictive = { path = "../tpt-t-space-predictive" }
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "warn"
+
+[lints.clippy]
+undocumented_unsafe_blocks = "warn"

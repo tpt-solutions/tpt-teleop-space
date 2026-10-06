@@ -100,6 +100,7 @@ pub struct Plan {
 pub struct Pose {
     /// Position, metres.
     pub x_m: f32,
+    /// Position, metres.
     pub y_m: f32,
     /// Heading, radians.
     pub yaw_rad: f32,
