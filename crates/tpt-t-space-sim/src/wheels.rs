@@ -43,18 +43,16 @@ impl SimWheel {
         // Saturation: accelerating beyond the speed limit yields zero
         // effective torque in that direction.
         let would_be = self.speed_rad_s + tau * 1.0e-3 / self.inertia_kgm2 * dt_s;
-        if would_be.abs() > self.speed_max_rad_s
-            && would_be.abs() > self.speed_rad_s.abs()
-        {
+        if would_be.abs() > self.speed_max_rad_s && would_be.abs() > self.speed_rad_s.abs() {
             tau = 0.0;
-            self.speed_rad_s = self.speed_rad_s.clamp(
-                -self.speed_max_rad_s,
-                self.speed_max_rad_s,
-            );
+            self.speed_rad_s = self
+                .speed_rad_s
+                .clamp(-self.speed_max_rad_s, self.speed_max_rad_s);
         }
         self.speed_rad_s += tau * 1.0e-3 / self.inertia_kgm2 * dt_s;
-        self.speed_rad_s =
-            self.speed_rad_s.clamp(-self.speed_max_rad_s, self.speed_max_rad_s);
+        self.speed_rad_s = self
+            .speed_rad_s
+            .clamp(-self.speed_max_rad_s, self.speed_max_rad_s);
         tau
     }
 }
@@ -140,7 +138,11 @@ mod tests {
         for _ in 0..100 {
             w.step(0.0, 0.01);
         }
-        assert!(w.speed_rad_s < v0, "coasting decays: {v0} → {}", w.speed_rad_s);
+        assert!(
+            w.speed_rad_s < v0,
+            "coasting decays: {v0} → {}",
+            w.speed_rad_s
+        );
     }
 
     #[test]

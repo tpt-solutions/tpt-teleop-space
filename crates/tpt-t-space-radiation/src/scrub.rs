@@ -195,7 +195,13 @@ impl Scrubber {
         }
         let mut report = ScrubReport::default();
         for (w, p) in data.chunks_exact_mut(8).zip(parity.iter_mut()) {
-            let mut word = u64::from_le_bytes(w.try_into().expect("8-byte chunk"));
+            // Manual little-endian assembly: `chunks_exact(8)` guarantees
+            // the length, and the flight rule bans even infallible
+            // `expect`s in the hot path.
+            let mut word = 0u64;
+            for (k, b) in w.iter().enumerate() {
+                word |= u64::from(*b) << (8 * k);
+            }
             let stored = *p;
             let (fixed, status) = Hamming64::check(word, stored);
             match status {
@@ -204,7 +210,9 @@ impl Scrubber {
                     report.bits_corrected += 1;
                     if bit < 64 {
                         word = fixed;
-                        w.copy_from_slice(&word.to_le_bytes());
+                        for (k, b) in w.iter_mut().enumerate() {
+                            *b = (word >> (8 * k)) as u8;
+                        }
                     }
                     // Corrected check-bit (bit >= 64): data untouched, the
                     // recomputed symbol below heals the stored parity.

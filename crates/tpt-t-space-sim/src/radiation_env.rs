@@ -46,8 +46,11 @@ impl RadiationEnv {
             let byte = (self.rng.next_u64() as usize) % region.len();
             let bit = (self.rng.next_u64() >> 3) % 8;
             region[byte] ^= 1 << bit;
-            self.log
-                .record((self.credit * 1e6) as u64, SeuKind::ScrubCorrected, byte as u32);
+            self.log.record(
+                (self.credit * 1e6) as u64,
+                SeuKind::ScrubCorrected,
+                byte as u32,
+            );
             flipped += 1;
         }
         flipped

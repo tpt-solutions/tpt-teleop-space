@@ -107,8 +107,9 @@ impl DockingController {
         // Keep-out: the servicer may not be inside the sphere.
         let r = (state[0] * state[0] + state[2] * state[2] + state[4] * state[4]).sqrt();
         if r < self.cfg.keep_out_m && !contact_phase {
-            self.aborted = Some(ApproachAbort::KeepOutViolation);
-            return Err(self.aborted.unwrap());
+            let abort = ApproachAbort::KeepOutViolation;
+            self.aborted = Some(abort);
+            return Err(abort);
         }
         // Reference: a velocity servo onto a braking-limited glideslope —
         // v ≤ gain·range (corridor) AND v ≤ √(2·a·(range − stop)) (the

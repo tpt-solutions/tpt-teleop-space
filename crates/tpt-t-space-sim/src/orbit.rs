@@ -98,11 +98,7 @@ impl Orbit {
         let r = (x * x + y * y + z * z).sqrt();
         let r3 = r * r * r;
         // Two-body.
-        let mut a = [
-            -MU_EARTH * x / r3,
-            -MU_EARTH * y / r3,
-            -MU_EARTH * z / r3,
-        ];
+        let mut a = [-MU_EARTH * x / r3, -MU_EARTH * y / r3, -MU_EARTH * z / r3];
         // J2 (ECI z-axis oblateness).
         if self.perturbations.j2 {
             let zr2 = (z * z) / (r * r);
@@ -206,7 +202,9 @@ impl Orbit {
         let hy = state[2] * state[3] - state[0] * state[5];
         let hz = state[0] * state[4] - state[1] * state[3];
         let h2 = hx * hx + hy * hy + hz * hz;
-        let e = (1.0 + 2.0 * energy * h2 / (MU_EARTH * MU_EARTH)).max(0.0).sqrt();
+        let e = (1.0 + 2.0 * energy * h2 / (MU_EARTH * MU_EARTH))
+            .max(0.0)
+            .sqrt();
         let inc = (hz / h2.sqrt()).acos();
         (a, e, inc)
     }
@@ -221,14 +219,7 @@ mod tests {
         let r = R_EARTH + 500e3;
         let v = (MU_EARTH / r).sqrt();
         let inc = 53.0_f64.to_radians();
-        [
-            r,
-            0.0,
-            0.0,
-            0.0,
-            v * inc.cos(),
-            v * inc.sin(),
-        ]
+        [r, 0.0, 0.0, 0.0, v * inc.cos(), v * inc.sin()]
     }
 
     #[test]
@@ -247,11 +238,11 @@ mod tests {
             remaining -= dt;
         }
         let s0 = leo_state();
-        let err = ((s[0] - s0[0]).powi(2)
-            + (s[1] - s0[1]).powi(2)
-            + (s[2] - s0[2]).powi(2))
-        .sqrt();
-        assert!(err < 25.0, "position closure error {err:.2} m after one orbit");
+        let err = ((s[0] - s0[0]).powi(2) + (s[1] - s0[1]).powi(2) + (s[2] - s0[2]).powi(2)).sqrt();
+        assert!(
+            err < 25.0,
+            "position closure error {err:.2} m after one orbit"
+        );
     }
 
     #[test]
@@ -292,9 +283,6 @@ mod tests {
             orb.step_rk4(&mut s, 1.0);
         }
         let (a1, _, _) = Orbit::elements(&s);
-        assert!(
-            a1 < a0,
-            "drag decays the orbit: {a0:.1} → {a1:.1} m"
-        );
+        assert!(a1 < a0, "drag decays the orbit: {a0:.1} → {a1:.1} m");
     }
 }

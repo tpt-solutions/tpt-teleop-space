@@ -447,8 +447,10 @@ impl ControlCommand {
 }
 
 /// Serialize `value` into an owned byte buffer. Allocation occurs only for
-/// the output; the read side stays zero-copy via [`access`].
-pub fn serialize<T>(value: &T) -> Vec<u8>
+/// the output; the read side stays zero-copy via [`access`]. Returns
+/// `None` when rkyv cannot represent the value — no `expect` in flight
+/// code.
+pub fn serialize<T>(value: &T) -> Option<Vec<u8>>
 where
     T: for<'a> Serialize<
         rkyv::api::high::HighSerializer<
@@ -458,9 +460,11 @@ where
         >,
     >,
 {
-    rkyv::api::high::to_bytes::<rkyv::rancor::Error>(value)
-        .expect("rkyv serialize")
-        .to_vec()
+    Some(
+        rkyv::api::high::to_bytes::<rkyv::rancor::Error>(value)
+            .ok()?
+            .to_vec(),
+    )
 }
 
 /// Zero-copy read: validate (`CheckBytes`) and return a borrowed archived
@@ -515,7 +519,7 @@ mod tests {
             },
             seq: 42,
         };
-        let bytes = serialize(&cmd);
+        let bytes = serialize(&cmd).unwrap();
         let view = access::<ControlCommand>(&bytes).expect("valid archived command");
         assert_eq!(view.seq, 42);
         assert_eq!(view.operator_id.0, [7; 16]);
@@ -563,7 +567,7 @@ mod tests {
             .is_ok()
         );
 
-        let bytes = serialize(&feed);
+        let bytes = serialize(&feed).unwrap();
         let view = access::<SensorFeed>(&bytes).expect("valid archived feed");
         assert_eq!(view.video_count, MAX_VIDEO_FRAMES as u8);
         assert_eq!(view.video_frames[2].width, 1920);

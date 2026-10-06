@@ -81,8 +81,9 @@ impl<const N: usize> SeuBook<N> {
 
     /// Iterate the retained events, oldest first.
     pub fn iter(&self) -> impl Iterator<Item = SeuEntry> + '_ {
-        (0..self.len)
-            .map(move |i| self.ring[(self.head + i) % N].expect("retained slots are always Some"))
+        // `filter_map` flattens the Option: retained slots are always
+        // Some by construction, and the flight rule bans the `expect`.
+        (0..self.len).filter_map(move |i| self.ring[(self.head + i) % N])
     }
 
     /// Number of retained events.

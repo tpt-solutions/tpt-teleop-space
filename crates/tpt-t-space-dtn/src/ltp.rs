@@ -192,13 +192,14 @@ impl LtpSender {
         acked_to: usize,
         now_us: u64,
     ) -> Result<bool, LtpError> {
-        let s = self
+        let slot = self
             .sessions
             .iter_mut()
             .find(|s| matches!(s, Some(x) if x.id == session))
-            .ok_or(LtpError::NoSuchSession)?
-            .as_mut()
-            .expect("matched Some");
+            .ok_or(LtpError::NoSuchSession)?;
+        let Some(s) = slot.as_mut() else {
+            return Err(LtpError::NoSuchSession);
+        };
         s.acked = s.acked.max(acked_to.min(s.block_len));
         s.last_activity_us = now_us;
         if s.acked >= s.block_len {

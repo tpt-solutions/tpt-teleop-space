@@ -96,7 +96,9 @@ impl HazardAvoidance {
                 }
             }
         }
-        let (curvature, speed) = self.last_plan.expect("due path covers None");
+        // The `due` branch above covers `None`; the fallback holds the
+        // last plan or stops — no `expect` in the hot path.
+        let (curvature, speed) = self.last_plan.unwrap_or((0.0, 0.0));
         Avoidance::Following { curvature, speed }
     }
 

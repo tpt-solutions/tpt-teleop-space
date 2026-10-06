@@ -93,7 +93,11 @@ mod tests {
         }
         assert!(c.sim_days() >= 212.0);
         // Wall time at 1e7×: 212 days of sim = ~1.8 wall seconds.
-        assert!(c.wall_s < 5.0, "years of cruise in seconds of wall: {} s", c.wall_s);
+        assert!(
+            c.wall_s < 5.0,
+            "years of cruise in seconds of wall: {} s",
+            c.wall_s
+        );
     }
 
     #[test]

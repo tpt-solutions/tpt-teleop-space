@@ -12,5 +12,9 @@ description = "Headless space simulator: 6DOF orbital mechanics (J2, drag, third
 tpt-t-space-core = { workspace = true }
 tpt-t-space-radiation = { workspace = true }
 
+[dev-dependencies]
+tpt-t-space-dtn = { workspace = true }
+tpt-t-space-predictive = { workspace = true }
+
 [lints]
 workspace = true

@@ -65,17 +65,15 @@ impl StarTracker {
     /// the blinding latch; while blinded, [`Self::measure`] returns
     /// `None`.
     pub fn set_geometry(&mut self, boresight: [f32; 3], sun_body: [f32; 3]) {
-        let dot = boresight[0] * sun_body[0]
-            + boresight[1] * sun_body[1]
-            + boresight[2] * sun_body[2];
+        let dot =
+            boresight[0] * sun_body[0] + boresight[1] * sun_body[1] + boresight[2] * sun_body[2];
         let bn = (boresight[0] * boresight[0]
             + boresight[1] * boresight[1]
             + boresight[2] * boresight[2])
-        .sqrt();
-        let sn = (sun_body[0] * sun_body[0]
-            + sun_body[1] * sun_body[1]
-            + sun_body[2] * sun_body[2])
-        .sqrt();
+            .sqrt();
+        let sn =
+            (sun_body[0] * sun_body[0] + sun_body[1] * sun_body[1] + sun_body[2] * sun_body[2])
+                .sqrt();
         self.blinded = if bn < 1e-6 || sn < 1e-6 {
             false
         } else {

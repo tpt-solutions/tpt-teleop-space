@@ -129,9 +129,11 @@ pub struct SpaceEvent {
     pub payload: u64,
 }
 
-/// Serialize `value` into an owned byte buffer. Allocation occurs only for
-/// the output; the read side stays zero-copy via [`access`].
-pub fn serialize<T>(value: &T) -> Vec<u8>
+/// Serialize `value` into an owned byte buffer. Allocation occurs only
+/// for the output; the read side stays zero-copy via [`access`]. Returns
+/// `None` when rkyv cannot represent the value (never for the fixed-size
+/// POD records in this prelude) — no `expect` in flight code.
+pub fn serialize<T>(value: &T) -> Option<Vec<u8>>
 where
     T: for<'a> Serialize<
         rkyv::api::high::HighSerializer<
@@ -141,9 +143,11 @@ where
         >,
     >,
 {
-    rkyv::api::high::to_bytes::<rkyv::rancor::Error>(value)
-        .expect("rkyv serialize")
-        .to_vec()
+    Some(
+        rkyv::api::high::to_bytes::<rkyv::rancor::Error>(value)
+            .ok()?
+            .to_vec(),
+    )
 }
 
 /// Zero-copy read: validate (`CheckBytes`) and return a borrowed archived
@@ -184,7 +188,7 @@ mod tests {
             quat_wxyz: [1.0, 0.0, 0.0, 0.0],
             timestamp_us: 1_725_000_000_123,
         };
-        let bytes = serialize(&pose);
+        let bytes = serialize(&pose).unwrap();
         let view = access::<Pose6Dof>(&bytes).expect("valid archived pose");
         assert_eq!(view.position_m, pose.position_m);
         assert_eq!(view.quat_wxyz, pose.quat_wxyz);
@@ -203,7 +207,7 @@ mod tests {
             rate_rad_s: [0.001, -0.002, 0.0],
             timestamp_us: 99,
         };
-        let bytes = serialize(&att);
+        let bytes = serialize(&att).unwrap();
         let back = deserialize::<Attitude>(&bytes).unwrap();
         assert_eq!(back, att);
 
@@ -212,7 +216,7 @@ mod tests {
             rz: -0.05,
             ..BodyCmd6::default()
         };
-        let bytes = serialize(&cmd);
+        let bytes = serialize(&cmd).unwrap();
         let view = access::<BodyCmd6>(&bytes).unwrap();
         assert_eq!(view.tx, 0.10);
         assert_eq!(view.rz, -0.05);
@@ -244,7 +248,8 @@ mod tests {
             seq: 2,
             timestamp_us: 3,
             payload: 4,
-        });
+        })
+        .unwrap();
         // A truncated buffer has no valid archived root, so validation must
         // reject it.
         let truncated = &bytes[..bytes.len().saturating_sub(1)];
@@ -262,7 +267,7 @@ mod tests {
             fault_bits: 0,
             uptime_s: 86_400,
         };
-        let bytes = serialize(&health);
+        let bytes = serialize(&health).unwrap();
         let view = access::<SubsystemHealth>(&bytes).unwrap();
         assert_eq!(view.battery_soc_pct, 61.5);
         assert_eq!(view.solar_w, 842.0);
