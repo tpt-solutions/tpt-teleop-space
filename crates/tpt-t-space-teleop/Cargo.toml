@@ -1,0 +1,18 @@
+[package]
+name = "tpt-t-space-teleop"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "The space-domain teleoperation adapter: DomainTeleopInterface implementation with predictive display, uploaded command sequencing, bandwidth optimization, and DTN transport"
+
+[dependencies]
+tpt-t-domain-bridge = { workspace = true }
+tpt-t-space-core = { workspace = true }
+tpt-t-space-dtn = { workspace = true }
+tpt-t-space-predictive = { workspace = true }
+
+[lints]
+workspace = true
