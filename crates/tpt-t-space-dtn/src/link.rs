@@ -22,6 +22,7 @@ pub struct Egress {
     pub sector: usize,
     /// Payload byte range `[from, to)` handed to the link this tick.
     pub from: u32,
+    /// Range end (exclusive).
     pub to: u32,
     /// Whether this completes the bundle (receiver may now custody-ack).
     pub final_flit: bool,
@@ -154,16 +155,7 @@ impl DtnAgent {
     /// Bundles still stored (awaiting transmission or custody ack).
     #[must_use]
     pub fn pending(&self) -> u32 {
-        self.store.free_sectors() * 0 + {
-            // count allocated sectors without mutating
-            let mut n = 0;
-            for s in 0..64 {
-                if self.store.allocated_sectors().any(|a| a == s) {
-                    n += 1;
-                }
-            }
-            n
-        }
+        self.store.allocated_count()
     }
 }
 

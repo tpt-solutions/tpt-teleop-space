@@ -123,7 +123,7 @@ mod tests {
         }
         let mut stream = TmStream::new(&buf);
         let mut seen = Vec::new();
-        while let Some(v) = stream.next() {
+        for v in stream.by_ref() {
             seen.push(v.expect("valid").sequence_count);
         }
         assert_eq!(seen, vec![0, 1, 2, 3, 4]);
@@ -155,6 +155,7 @@ mod tests {
         let second = stream.next().expect("second position");
         assert_eq!(second, Err(ParseError::LengthTruncated));
         assert!(stream.next().is_none(), "walk stops after the error");
+
         let s = stream.stats();
         assert_eq!(s.packets, 1);
         assert_eq!(s.stopped_at as usize, clean_len);

@@ -14,8 +14,7 @@
 //! [12..16) transmit cursor
 //! ```
 
-use bytecheck::CheckBytes;
-use rkyv::{Archive, Deserialize, Portable, Serialize};
+use rkyv::{Archive, Deserialize, Serialize};
 use tpt_t_space_core::crc::crc32;
 
 /// Endpoint identifier: a fixed 16-byte name (readable ASCII, zero padded —
@@ -390,6 +389,12 @@ impl BundleStore {
     /// Iterate allocated sector ids (unordered).
     pub fn allocated_sectors(&self) -> impl Iterator<Item = usize> + '_ {
         (0..self.sectors).filter(move |s| self.allocated & (1 << s) != 0)
+    }
+
+    /// Number of allocated (stored) sectors.
+    #[must_use]
+    pub fn allocated_count(&self) -> u32 {
+        self.allocated.count_ones()
     }
 
     /// Snapshot the NVRAM image (the reboot boundary: bytes alone).

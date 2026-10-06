@@ -259,7 +259,7 @@ impl PowerSubsystem {
             .iter()
             .filter(|l| l.powered)
             .enumerate()
-            .map(|(i, l)| 8.0 + i as f32 * 4.0) // per-load nameplate, watts
+            .map(|(i, _load)| 8.0 + i as f32 * 4.0) // per-load nameplate, watts
             .sum();
         self.battery.step(harvest - load_w, dt_s);
         self.manage_shedding(shadowed);
@@ -333,7 +333,7 @@ impl PowerSubsystem {
     /// Whether a load is powered.
     #[must_use]
     pub fn load_powered(&self, index: usize) -> bool {
-        self.loads.get(index).map_or(false, |l| l.powered)
+        self.loads.get(index).is_some_and(|load| load.powered)
     }
 }
 

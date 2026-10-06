@@ -194,7 +194,12 @@ mod tests {
     #[test]
     fn attitude_and_body_cmd_roundtrip() {
         let att = Attitude {
-            quat_wxyz: [0.7071, 0.0, 0.7071, 0.0],
+            quat_wxyz: [
+                core::f32::consts::FRAC_1_SQRT_2,
+                0.0,
+                core::f32::consts::FRAC_1_SQRT_2,
+                0.0,
+            ],
             rate_rad_s: [0.001, -0.002, 0.0],
             timestamp_us: 99,
         };

@@ -292,7 +292,7 @@ impl LtpReceiver {
             return;
         }
         let start = offset / self.step;
-        let end = ((offset + len).min(self.block_len) + self.step - 1) / self.step;
+        let end = (offset + len).min(self.block_len).div_ceil(self.step);
         for b in start..end.min(128) {
             self.bits[b / 64] |= 1 << (b % 64);
         }
@@ -345,16 +345,11 @@ mod tests {
         let mut rx = LtpReceiver::new(1, BLOCK, 50);
         let mut now = 0u64;
         let mut delivered = 0usize;
-        loop {
-            match s.next_segment(now) {
-                Some(seg) => {
-                    delivered += seg.len;
-                    rx.receive(seg.offset, seg.len);
-                    if seg.checkpoint {
-                        s.on_report(1, rx.contiguous(), now).expect("report");
-                    }
-                }
-                None => break,
+        while let Some(seg) = s.next_segment(now) {
+            delivered += seg.len;
+            rx.receive(seg.offset, seg.len);
+            if seg.checkpoint {
+                s.on_report(1, rx.contiguous(), now).expect("report");
             }
             now += 1_000;
         }

@@ -73,16 +73,14 @@ fn mutation_fuzz_never_panics_and_never_overborrows() {
             mutant[at] = rng.next_u64() as u8;
         }
         // Whole-buffer walk: may accept a prefix, may reject; never panics.
-        let mut stream = TmStream::new(&mutant);
-        while let Some(r) = stream.next() {
-            if let Ok(v) = r {
-                assert!(
-                    v.total_len() <= mutant.len(),
-                    "round {round}: view exceeds buffer"
-                );
-                // Payload borrows stay within the accepted packet.
-                assert!(v.payload().len() + 6 == v.total_len());
-            }
+        let stream = TmStream::new(&mutant);
+        for v in stream.flatten() {
+            assert!(
+                v.total_len() <= mutant.len(),
+                "round {round}: view exceeds buffer"
+            );
+            // Payload borrows stay within the accepted packet.
+            assert!(v.payload().len() + 6 == v.total_len());
         }
         // Direct one-shot parses of random slices: no panic under any
         // truncation.
@@ -154,12 +152,10 @@ fn chunk_split_property_stream_is_prefix_safe() {
 
     for tear in 0..buf.len() {
         let torn = &buf[..tear];
-        let mut stream = TmStream::new(torn);
+        let stream = TmStream::new(torn);
         let mut got = Vec::new();
-        while let Some(r) = stream.next() {
-            if let Ok(v) = r {
-                got.push(v.sequence_count);
-            }
+        for v in stream.flatten() {
+            got.push(v.sequence_count);
         }
         // Packet 1 parses only when the full 16 bytes are present; packet
         // 2 adds its full 12. Anything less is rejected, never misparsed.

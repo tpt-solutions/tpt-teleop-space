@@ -56,7 +56,12 @@ pub enum RadiatorState {
     /// Stowed for launch / cruise.
     Stowed,
     /// Deployment in progress (steps counted).
-    Deploying { step: u8, of: u8 },
+    Deploying {
+        /// Current step.
+        step: u8,
+        /// Total steps.
+        of: u8,
+    },
     /// Deployed and latched.
     Deployed,
     /// Deployment stalled (steps not advancing) — a deploy fault.
