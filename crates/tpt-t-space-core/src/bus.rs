@@ -106,15 +106,19 @@ impl<T, const N: usize> SpscRing<T, N> {
         (Producer(self.clone()), Consumer(self.clone()))
     }
 
-    /// Push, panicking on full. Use only when capacity is sized for the
-    /// steady state and overflow is a programming error.
+    /// Push with bounded spin-wait backpressure: the producer spins (with
+    /// a pause hint) until the consumer drains a slot. No panic — the
+    /// flight rule bans it — and the consumer is guaranteed progress, so
+    /// the wait is bounded by the consumer's tick.
     pub fn push(&self, item: T)
     where
         T: Send,
     {
-        self.try_push(item)
-            .ok()
-            .expect("SpscRing producer overflow")
+        let mut item = item;
+        while let Err(back) = self.try_push(item) {
+            item = back;
+            core::hint::spin_loop();
+        }
     }
 }
 
@@ -164,12 +168,9 @@ impl<T, const N: usize> Consumer<T, N> {
 }
 
 impl<T: Send, const N: usize> Producer<T, N> {
-    /// Push, panicking on full. Use only when capacity is sized for the steady
-    /// state and overflow is a programming error.
+    /// Push with bounded spin-wait backpressure (see [`SpscRing::push`]).
     pub fn push(&self, item: T) {
-        self.try_push(item)
-            .ok()
-            .expect("SpscRing producer overflow")
+        self.0.push(item);
     }
 }
 
