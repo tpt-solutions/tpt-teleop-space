@@ -1,0 +1,16 @@
+[package]
+name = "tpt-t-space-sim"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Headless space simulator: 6DOF orbital mechanics (J2, drag, third body), reaction wheel dynamics, sensor noise models, radiation bit-flip injection, DTN blackout/light-time profiles, variable-speed clock"
+
+[dependencies]
+tpt-t-space-core = { workspace = true }
+tpt-t-space-radiation = { workspace = true }
+
+[lints]
+workspace = true

@@ -327,6 +327,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-t-space-sim"
+version = "0.1.0"
+dependencies = [
+ "tpt-t-space-core",
+ "tpt-t-space-radiation",
+]
+
+[[package]]
 name = "tpt-t-space-teleop"
 version = "0.1.0"
 dependencies = [

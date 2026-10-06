@@ -1,0 +1,18 @@
+[package]
+name = "tpt-t-space-visualizer"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+authors = ["TPT Solutions"]
+repository = "https://github.com/tpt-solutions/tpt-teleop-space"
+description = "egui visualizer for tpt-teleop-space: orbital trajectories, attitude, rover terrain, power/thermal budgets (excluded from the workspace build)"
+
+# Excluded from the parent workspace: the egui/winit chain sits outside
+# the strict MIT-chain deny.toml scope the workspace members are audited
+# under. Builds in isolation with its own CI job.
+
+[dependencies]
+eframe = "0.29"
+tpt-t-space-core = { path = "../tpt-t-space-core" }
+tpt-t-space-sim = { path = "../tpt-t-space-sim" }
