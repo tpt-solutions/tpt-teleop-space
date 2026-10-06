@@ -23,11 +23,21 @@ deterministic SIMD-accelerated ADCS control, and predictive onboard autonomy
 
 ## Status
 
-🚧 **In development** — working through the phase plan in
-[`todo.md`](todo.md) (foundation → bridge → core → radiation → space
-protocols → DTN → survival → autonomy → vehicles → edge → teleop → sim →
-integration → compliance → release). See [`docs/quickstart.md`](docs/quickstart.md)
-to build it.
+✅ **v1.0.0 — "v1 Monolithic Release"** (spec v1.0.0, 2026). All software
+phases implemented: the vendored `tpt-t-domain-bridge` DTI, the mission
+FSM + lock-free bus + NVRAM snapshot store, the Hamming(72,64) memory
+scrubber and TMR voter (measured **0.0066 µs/vote** vs the 50 µs spec
+budget), zero-copy CCSDS TM/TC parsers with deterministic fuzz campaigns,
+the BPv7/LTP store-and-forward stack (4-hour occultation + mid-blackout
+processor reset, exact resume), the atomic Safe Mode transition, stereo
+DEM + candidate-trajectory planning (**0.23 ms/replan** vs 50 ms), the
+nightly SIMD crates (ADCS at **0.84 µs/cycle** vs 200 µs; rover detour in
+0.8 ms), the `no_std` bare-metal edge layer validated on
+`aarch64-unknown-none-softfloat`, the DTI teleop adapter with predictive
+display and DTN transport, the headless simulator, and the complete §6
+Mars Sample Collection data-flow integration test. See
+[`todo.md`](todo.md) for the phase record and
+[`docs/quickstart.md`](docs/quickstart.md) to build it.
 
 | CI | Lint | Deps |
 |----|------|------|
@@ -65,7 +75,9 @@ Total allocations (steady state): 0        Total mutex locks: 0
 The forward data plane is built on lock-free SPSC rings (`tpt-t-space-core`)
 and proven zero-alloc on the hot path; see `tools/lock-audit.sh` (hard gate),
 `tools/alloc-audit.sh`, `tools/no-recursion.sh`, and
-`tools/no-panic-audit.sh`.
+`tools/no-panic-audit.sh` (strict mode passes). Compliance readiness is
+mapped in [`docs/compliance.md`](docs/compliance.md), and the Safe Mode
+FMEA lives at [`docs/fmea-safe-mode.md`](docs/fmea-safe-mode.md).
 
 ## Developer Experience
 

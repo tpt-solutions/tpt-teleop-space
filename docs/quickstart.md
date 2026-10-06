@@ -1,7 +1,7 @@
 # Quickstart — tpt-teleop-space
 
-> Status: stub. This document will grow as the crates land. The scaffold below
-> is enough to build and test the workspace today.
+> Build, test, and gate the workspace. Every spec budget has an in-repo
+> enforcement switch.
 
 ## Prerequisites
 
