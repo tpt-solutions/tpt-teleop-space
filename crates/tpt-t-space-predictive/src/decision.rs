@@ -37,7 +37,7 @@ pub fn select_best<C: Copy, E: Evaluator<Candidate = C>>(
         if !out.safe {
             continue;
         }
-        if best.map_or(true, |(_, s)| out.score > s) {
+        if best.is_none_or(|(_, s)| out.score > s) {
             best = Some((c, out.score));
         }
     }

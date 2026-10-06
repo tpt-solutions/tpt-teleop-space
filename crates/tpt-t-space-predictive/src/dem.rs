@@ -101,7 +101,6 @@ impl StereoRig {
     /// `camera_height − Z·sin(pitch)` ≈ `height − Z` for a nadir-ish
     /// rig. The grid binning uses the projected ground coordinates
     /// `(x = u·Z/f, y)`.
-    #[must_use]
     pub fn depth_m(&self, disparity_px: f32) -> Result<f32, StereoError> {
         let (dmin, dmax) = self.disparity_range;
         if !(dmin..=dmax).contains(&disparity_px) || disparity_px <= 0.0 {
@@ -251,7 +250,6 @@ mod tests {
     #[test]
     fn flat_ground_yields_flat_dem() {
         let mut dem = DemGrid::<W, H>::new(DemConfig::rover());
-        let r = rig();
         // Flat ground at camera height 1.5: height = 0 everywhere. Depth
         // per pixel row: for v=0 (centre), depth = 1.5 → disparity f·B/Z
         // = 800·0.5/1.5 ≈ 266 — beyond the range; use points instead.

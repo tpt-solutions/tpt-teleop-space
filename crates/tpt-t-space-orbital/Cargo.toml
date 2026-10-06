@@ -1,0 +1,16 @@
+[package]
+name = "tpt-t-space-orbital"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Rendezvous and Proximity Operations for tpt-teleop-space: 6DOF relative navigation, autonomous docking via MPC, and 7-DOF robotic arm manipulation"
+
+[dependencies]
+tpt-t-space-core = { workspace = true }
+tpt-t-space-predictive = { workspace = true }
+
+[lints]
+workspace = true

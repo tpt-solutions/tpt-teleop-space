@@ -132,11 +132,31 @@ impl<const N: usize, const M: usize, const HOR: usize> Mpc<N, M, HOR> {
         }
     }
 
-    /// Solve for the first control action given the current state and a
-    /// reference state (held constant over the horizon — the standard
-    /// regulation formulation). Warm-starts from the previous solution
-    /// shifted one step (the receding-horizon pattern).
+    /// Solve for the first control action against a *reference
+    /// trajectory* — `refs[k]` is the state target at horizon step `k`.
+    /// This is the formulation moving vehicles need: a constant snapshot
+    /// reference makes the controller fight its own commanded motion over
+    /// the horizon.
+    pub fn solve_track(
+        &mut self,
+        plant: &Plant<N, M>,
+        x0: &[f32; N],
+        refs: &[[f32; N]; HOR],
+    ) -> [f32; M] {
+        self.solve_impl(plant, x0, |k, i| refs[k][i])
+    }
+
+    /// Solve against a constant reference (standard regulation).
     pub fn solve(&mut self, plant: &Plant<N, M>, x0: &[f32; N], x_ref: &[f32; N]) -> [f32; M] {
+        self.solve_impl(plant, x0, |_, i| x_ref[i])
+    }
+
+    fn solve_impl(
+        &mut self,
+        plant: &Plant<N, M>,
+        x0: &[f32; N],
+        ref_at: impl Fn(usize, usize) -> f32,
+    ) -> [f32; M] {
         // Warm start: shift controls, tail zero.
         self.us.rotate_left(1);
         self.us[HOR - 1] = [0.0; M];
@@ -161,7 +181,7 @@ impl<const N: usize, const M: usize, const HOR: usize> Mpc<N, M, HOR> {
             for k in (0..HOR).rev() {
                 // Cost gradients at step k.
                 for i in 0..N {
-                    self.gx[k][i] += 2.0 * self.weights.q * (self.xs[k][i] - x_ref[i]);
+                    self.gx[k][i] += 2.0 * self.weights.q * (self.xs[k][i] - ref_at(k, i));
                 }
                 for j in 0..M {
                     self.gu[k][j] += 2.0 * self.weights.r * self.us[k][j];
@@ -204,7 +224,7 @@ impl<const N: usize, const M: usize, const HOR: usize> Mpc<N, M, HOR> {
             let fu = plant.fu(&self.us[k]);
             for i in 0..N {
                 self.xs[k + 1][i] = fx[i] + fu[i];
-                cost += self.weights.q * (self.xs[k][i] - x_ref[i]).powi(2);
+                cost += self.weights.q * (self.xs[k][i] - ref_at(k, i)).powi(2);
             }
             for j in 0..M {
                 cost += self.weights.r * self.us[k][j].powi(2);

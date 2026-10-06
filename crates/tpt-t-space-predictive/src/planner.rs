@@ -183,7 +183,7 @@ pub fn replan<const W: usize, const H: usize>(
             if cand.rejected {
                 continue;
             }
-            if best.map_or(true, |b| cand.score > b.score) {
+            if best.is_none_or(|b| cand.score > b.score) {
                 best = Some(cand);
             }
         }
