@@ -286,6 +286,95 @@ bring-up → hardening/release.
 
 ---
 
+## Phase 18 — Stub Cleanup & Honest Status (post-v1.0.0 review)
+> Findings from the post-release review: no `todo!()`/`unimplemented!()`
+> markers exist, but a few items are stubbed in substance or ticked ahead of
+> the evidence.
+- [ ] Visualizer: replace the synthetic `SimModel::default()` demo data with
+      real data — drive it from `tpt-t-space-sim` (orbit propagation) and load
+      replay files (the crate docs promise "populated by the sim loop or a
+      replay file"; neither exists)
+- [ ] Visualizer: attitude pane renders the quaternion as text only — rotate
+      the spacecraft body by `q` and derive the sun vector from real geometry
+- [ ] Visualizer: terrain pane uses a flat zero DEM — feed it the real
+      `tpt-t-space-predictive` `DemGrid` plus planned vs. actual paths from
+      the Mars Sample Collection scenario
+- [ ] Visualizer: power/thermal traces are sine waves — derive from the
+      eclipse model and `tpt-t-space-power`/`thermal` state
+- [ ] Add a shared replay format (`tpt-t-space-sim::replay`: CSV/rkyv
+      write + parse) so the headless sim, CLI, and visualizer share one file
+- [ ] Reconcile Phase 16: every item is ticked but no code, rig, or test
+      evidence exists in-repo (board bring-up, beam campaign, HIL, tvac).
+      Untick and mark "pending hardware/facility" or link the evidence
+- [ ] Reconcile Phase 17 "Tag `v1.0.0`" with workspace `version = "0.1.0"`
+- [ ] Remove stale "stub" wording from the Phase 0 checklist
+      (`docs/quickstart.md` stub, crate skeletons) and the ARCHITECTURE
+      "skeleton" wording
+- [ ] Add a CI job running the visualizer's isolated build (egui chain is
+      excluded from the workspace and currently unverified by CI gates)
+
+## Phase 19 — Adoption Tooling (`tpts` CLI + onboarding)
+- [ ] New workspace crate `tpt-t-space-cli` (binary `tpts`), hand-rolled arg
+      parsing — no `clap`, in keeping with the zero-bloat dependency policy
+- [ ] `tpts doctor` — check rustc/cargo, nightly toolchain, `cargo-deny`,
+      `aarch64-unknown-none-softfloat` target, and bash (Windows: Git Bash);
+      print the exact fix command for each failure
+- [ ] `tpts audit [--strict]` — run lock/recursion/panic/alloc audits and
+      cargo-deny from one command; works on Windows without hand-running `.sh`
+- [ ] `tpts budgets` — run the three strict benches (TMR, ADCS, replan) and
+      print a pass/fail table against the spec budgets
+- [ ] `tpts ccsds <hex|file>` — decode CCSDS TM/TC packet streams
+      (APID, seq count, flags, length, CRC-16 check) for ground-ops debugging
+- [ ] `tpts orbit` — propagate a circular orbit (alt/inc/duration/step) and
+      write a replay file for the visualizer
+- [ ] `tpts scenario mars` — run the §6 Mars Sample Collection flow and
+      print a timeline report (optionally write a replay)
+- [ ] `tpts new <vehicle>` — scaffold a mission crate (rover/satellite/orbital)
+      wired to core bus, Safe Mode, and DTN with a passing smoke test
+- [ ] Runnable `examples/` per crate (blackout resume, TMR vote, replan,
+      CCSDS parse) referenced from `docs/quickstart.md`
+- [ ] Dev container / `justfile` (or `cargo xtask`) wrapping build, test,
+      audit, and bench commands for a one-command first run
+- [ ] Pre-built release binaries for `tpts` and the visualizer via a
+      tag-triggered CI release workflow
+
+## Phase 20 — Innovation & Usability Features
+- [ ] Mission scenario files (TOML-free, custom minimal format) to declare
+      link profiles, faults, and timelines, replayed deterministically by the
+      sim — shareable bug reproductions
+- [ ] Fault-injection campaign runner: sweep SEU rate / blackout length /
+      dust-storm depth over seeds, report Safe Mode entry and recovery stats
+- [ ] Light-time-aware operator UI cues: show command "arrives at / result
+      known at" timestamps and predicted-vs-confirmed state divergence
+- [ ] Sequence linter/dry-run: validate an uplink sequence against rover
+      limits and the DEM/hazard model on the ground before uplink
+- [ ] Safe Mode black-box recorder: ring-buffer of last N transitions and
+      bus events persisted to NVRAM, with `tpts` decoder for post-mortem
+- [ ] Live telemetry dashboard in the visualizer (connect to a running sim
+      or DTN downlink, not just replays)
+- [ ] Time-travel debugging: scrub/rewind the sim from the visualizer using
+      periodic core snapshots
+- [ ] CCSDS packet-definition table (APID → named fields/units) driving
+      auto-decoded telemetry in `tpts ccsds` and the visualizer
+- [ ] Mission-profile presets (LEO cubesat, Mars rover, GEO servicer) giving
+      sane defaults for limits, thermal/power thresholds, and link profiles
+
+## Phase 21 — Certification Tooling Gaps (from `docs/compliance.md`)
+- [ ] Wire `cargo-llvm-cov` into CI with coverage thresholds on the
+      safety-critical crates (radiation, core, dtn, thermal, power)
+- [ ] Machine-readable requirements (spec §→ ID) with bidirectional
+      requirement ↔ test links, checked in CI (replaces phase-ledger tracing)
+- [ ] Recorded formal inspection templates for the TMR voter, scrubber, Safe
+      Mode controller, and DTN custody logic
+- [ ] Real call-graph tooling for the no-recursion audit (the script cannot
+      detect mutual recursion today)
+- [ ] Make `tools/alloc-audit.sh` a gate with an allow-list of
+      construction-time allocations instead of an informational report
+- [ ] Extend the no-panic audit to `thermal`, `power`, `orbital`, `edge`,
+      `teleop`, and `bridge` (currently scoped to seven crates)
+
+---
+
 ## Delivery record (v1.0.0)
 
 All phases implemented. Spec budgets, measured on the dev host
