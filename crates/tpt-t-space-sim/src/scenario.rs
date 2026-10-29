@@ -12,7 +12,13 @@
 
 use std::time::Instant;
 
-use tpt_t_space_core::blackbox::{BlackBox, Event as BoxEvent, encoded_capacity};
+use tpt_t_space_core::blackbox::{BlackBox, Event as BoxEvent, restore_each};
+use tpt_t_space_core::wire::SpaceEvent;
+
+/// Bus kind code the Mars flow records when the uplink gains custody.
+pub const BUS_UPLINK_CUSTODY: u16 = 0x0001;
+/// NVRAM bytes reserved for the black box in the Mars flow.
+const NVRAM_BYTES: usize = 512;
 use tpt_t_space_core::machine::{MissionState, StateMachine};
 use tpt_t_space_core::safe_mode::{SafeModeActions, SafeModeCause, SafeModeController};
 use tpt_t_space_dtn::bundle::{Bundle, BundleStore, CustodyState, EndpointId, Priority};
@@ -378,6 +384,8 @@ pub struct MarsRun {
     pub sim_days: f64,
     /// The encoded Safe Mode black-box image (`tpts blackbox` decodes it).
     pub blackbox: Vec<u8>,
+    /// Records restored from the NVRAM region after the flow.
+    pub blackbox_restored: usize,
     /// The rover's pose trace as a replay (terrain + planned/actual paths).
     pub replay: Replay,
 }
@@ -434,6 +442,15 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
         0.0,
         "uplink",
         "command accepted under DTN custody",
+    );
+    recorder.record_bus(
+        0,
+        &SpaceEvent {
+            kind: BUS_UPLINK_CUSTODY,
+            seq: 1,
+            timestamp_us: 0,
+            payload: 0,
+        },
     );
     mission
         .transition(MissionState::Approach)
@@ -712,15 +729,20 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
         ..Replay::default()
     };
 
-    let mut blackbox = vec![0u8; encoded_capacity(16)];
+    // Persist the box to an NVRAM region, then restore it, as after a reset.
+    let mut nvram = [0xFFu8; NVRAM_BYTES];
     let image_len = recorder
-        .encode(&mut blackbox)
+        .encode(&mut nvram)
         .map_err(|_| ScenarioError("black-box image"))?;
-    blackbox.truncate(image_len);
+    let mut blackbox_restored = 0usize;
+    restore_each(&nvram, |_| blackbox_restored += 1)
+        .map_err(|_| ScenarioError("black-box restore"))?;
+    let blackbox = nvram[..image_len].to_vec();
 
     Ok(MarsRun {
         events,
         blackbox,
+        blackbox_restored,
         blackout_s,
         replan_ms,
         detour_arc_s: arc_s,
@@ -836,18 +858,23 @@ mod tests {
             .expect("the image decodes");
         assert_eq!(
             records.len(),
-            4,
-            "two approach moves, safe-mode entry and cause"
+            5,
+            "uplink custody, two approach moves, safe-mode entry and cause"
         );
+        assert_eq!(
+            run.blackbox_restored, 5,
+            "the NVRAM copy restores every record"
+        );
+        assert_eq!(records[0].event, BoxEvent::Bus(BUS_UPLINK_CUSTODY));
         assert!(matches!(
-            records[2].event,
+            records[3].event,
             BoxEvent::Transition {
                 to: MissionState::SafeMode,
                 ..
             }
         ));
         assert!(matches!(
-            records[3].event,
+            records[4].event,
             BoxEvent::SafeMode(SafeModeCause::PowerSurvivalThreshold)
         ));
     }

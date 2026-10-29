@@ -18,6 +18,7 @@ use std::fmt;
 use crate::crc::crc32;
 use crate::machine::MissionState;
 use crate::safe_mode::SafeModeCause;
+use crate::wire::SpaceEvent;
 
 const MAGIC: u8 = 0xBB;
 const VERSION: u8 = 1;
@@ -29,6 +30,7 @@ pub const RECORD_BYTES: usize = 8;
 const KIND_TRANSITION: u8 = 1;
 const KIND_SAFE_MODE: u8 = 2;
 const KIND_MARKER: u8 = 3;
+const KIND_BUS: u8 = 4;
 
 /// Bytes needed to serialize a box that holds `n` records.
 #[must_use]
@@ -50,6 +52,8 @@ pub enum Event {
     SafeMode(SafeModeCause),
     /// A subsystem marker with a code the subsystem defines.
     Marker(u8),
+    /// A bus event, by its kind code (see [`SpaceEvent::kind`]).
+    Bus(u16),
 }
 
 /// One recorded event with its mission time.
@@ -135,6 +139,12 @@ impl<const N: usize> BlackBox<N> {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Record a bus event at `t_s`, keeping its kind code. The sequence number
+    /// and payload are not kept: the box holds the sequence of events, not their data.
+    pub fn record_bus(&mut self, t_s: u32, event: &SpaceEvent) {
+        self.record(t_s, Event::Bus(event.kind));
     }
 
     /// Append an event, overwriting the oldest once the ring is full.
@@ -339,6 +349,7 @@ fn encode_event(event: Event) -> (u8, u8, u8) {
             (KIND_SAFE_MODE, code, detail)
         }
         Event::Marker(code) => (KIND_MARKER, code, 0),
+        Event::Bus(kind) => (KIND_BUS, kind.to_le_bytes()[0], kind.to_le_bytes()[1]),
     }
 }
 
@@ -350,6 +361,7 @@ fn decode_event(kind: u8, a: u8, b: u8) -> Option<Event> {
         }),
         KIND_SAFE_MODE => cause_from_code(a, b).map(Event::SafeMode),
         KIND_MARKER => Some(Event::Marker(a)),
+        KIND_BUS => Some(Event::Bus(u16::from_le_bytes([a, b]))),
         _ => None,
     }
 }
@@ -471,6 +483,22 @@ mod tests {
             restore_each(&nvram[..n - 1], |_| {}),
             Err(DecodeError::Short)
         );
+    }
+
+    #[test]
+    fn bus_events_keep_their_kind_through_the_image() {
+        let mut bb = BlackBox::<4>::new();
+        let ev = SpaceEvent {
+            kind: 0x0203,
+            seq: 9,
+            timestamp_us: 1,
+            payload: 2,
+        };
+        bb.record_bus(5, &ev);
+        let mut buf = [0u8; 64];
+        let n = bb.encode(&mut buf).expect("fits");
+        let back = decode_all(&buf[..n]).expect("decodes");
+        assert_eq!(back[0].event, Event::Bus(0x0203));
     }
 
     #[test]

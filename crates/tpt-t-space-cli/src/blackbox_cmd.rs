@@ -30,5 +30,6 @@ fn describe(event: Event) -> String {
         Event::Transition { from, to } => format!("transition {from} -> {to}"),
         Event::SafeMode(cause) => format!("safe mode entered: {cause:?}"),
         Event::Marker(code) => format!("marker {code}"),
+        Event::Bus(kind) => format!("bus event kind {kind:#06x}"),
     }
 }
