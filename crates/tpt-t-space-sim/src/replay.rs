@@ -264,6 +264,7 @@ mod tests {
         }
     }
 
+    // REQ: REP-001
     #[test]
     fn round_trips_exactly() {
         let r = sample();
@@ -283,6 +284,7 @@ mod tests {
         assert_eq!(Replay::parse(""), Err(ReplayError::Header));
     }
 
+    // REQ: REP-001
     #[test]
     fn reports_line_of_bad_field() {
         let err = Replay::parse("tpt-replay,1\nbud,1,oops,3\n").unwrap_err();

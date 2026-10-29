@@ -22,13 +22,17 @@
 //! * [`replay`] — the shared replay file format (CSV) for the visualizer
 //!   and the `tpts` CLI;
 //! * [`scenario`] — the canned LEO survey and the spec §6 Mars flow.
+//! * [`profile`] — mission-profile presets (LEO cubesat, Mars rover, GEO servicer);
+//! * [`campaign`] — seeded fault-injection sweeps over SEU rate and blackout length.
 //!
 //! Everything is deterministic: one seed drives the whole sim, so a
 //! failing scenario reproduces exactly.
 
+pub mod campaign;
 pub mod clock;
 pub mod dtn_link;
 pub mod orbit;
+pub mod profile;
 pub mod radiation_env;
 pub mod replay;
 pub mod scenario;

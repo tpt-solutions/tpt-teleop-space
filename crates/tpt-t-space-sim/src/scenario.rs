@@ -203,6 +203,7 @@ pub fn leo_survey(orbits: u32, step_s: f64) -> (Replay, Vec<Event>) {
     let mut events = Vec::new();
     let mut replay = Replay::default();
     let mut in_eclipse = false;
+    let mut survival_latched = false;
 
     for k in 0..steps {
         let t_s = k as f64 * step_s;
@@ -236,8 +237,11 @@ pub fn leo_survey(orbits: u32, step_s: f64) -> (Replay, Vec<Event>) {
             in_eclipse = eclipse;
         }
         power.track_sun(sun_body);
-        if let Some(cause) = power.step(t_s as u64, step_s as f32, eclipse) {
-            if matches!(cause, SafeModeCause::PowerSurvivalThreshold) && k > 0 {
+        // The survival trigger stays asserted for as long as the output is
+        // below the floor; log the onset once, not every sample.
+        match power.step(t_s as u64, step_s as f32, eclipse) {
+            Some(SafeModeCause::PowerSurvivalThreshold) if !survival_latched => {
+                survival_latched = true;
                 note(
                     &mut events,
                     t_s,
@@ -245,6 +249,8 @@ pub fn leo_survey(orbits: u32, step_s: f64) -> (Replay, Vec<Event>) {
                     "survival threshold (array output below floor)",
                 );
             }
+            Some(_) => {}
+            None => survival_latched = false,
         }
         let target_c = if eclipse {
             -12.0

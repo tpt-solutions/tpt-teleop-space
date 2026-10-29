@@ -5,6 +5,22 @@ All notable changes to this crate are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this crate adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Phase 18: `replay` module, the CSV replay format shared by the sim, the
+  `tpts` CLI, and the visualizer. Exact round-trip; line-numbered errors.
+- Phase 18: `scenario` module with the canned LEO survey (J2/drag orbit,
+  zenith-pointing attitude, eclipse-driven power and battery thermal) and the
+  spec §6 Mars Sample Collection flow. The integration test asserts on the
+  same run the CLI prints.
+
+- Phase 20: `profile` presets (LEO cubesat, Mars rover, GEO servicer) that
+  reuse the workspace's own link, thermal, rover, and power parameters.
+- Phase 20: `campaign` fault-injection sweeps over SEU rate (against the real
+  TMR voter) and blackout length (against the real DTN store), seeded and
+  deterministic.
+
 ## [0.1.0]
 
 ### Added

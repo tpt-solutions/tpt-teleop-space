@@ -16,6 +16,10 @@ can be tested on Earth.
   a simulated time, it answers whether the link is up.
 - `clock`: variable-speed simulation clock. Multi-year cruise phases run in
   minutes of wall time.
+- `replay`: the CSV replay format shared by the simulator, the `tpts` CLI, and
+  the visualizer. Parsing reports the failing line.
+- `scenario`: the canned LEO survey (orbit, attitude, power and thermal
+  budgets) and the spec §6 Mars Sample Collection flow.
 
 ## Part of tpt-teleop-space
 
