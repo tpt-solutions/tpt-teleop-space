@@ -1,0 +1,61 @@
+name: release
+
+# Tag-triggered binary release: `tpts` and the visualizer for each host.
+on:
+  push:
+    tags: ["v*"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+
+jobs:
+  binaries:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            suffix: linux-x86_64
+          - os: macos-latest
+            suffix: macos-aarch64
+          - os: windows-latest
+            suffix: windows-x86_64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build tpts
+        run: cargo build --release -p tpt-t-space-cli
+      - name: Build visualizer (isolated, excluded from the workspace)
+        run: cargo build --release --manifest-path crates/tpt-t-space-visualizer/Cargo.toml
+      - name: Package
+        shell: bash
+        run: |
+          set -euo pipefail
+          ext=""
+          if [ "${{ runner.os }}" = "Windows" ]; then ext=".exe"; fi
+          mkdir -p dist
+          cp "target/release/tpts${ext}" "dist/tpts-${{ matrix.suffix }}${ext}"
+          cp "crates/tpt-t-space-visualizer/target/release/tpt-t-space-visualizer${ext}" \
+             "dist/tpt-t-space-visualizer-${{ matrix.suffix }}${ext}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.suffix }}
+          path: dist/*
+
+  publish:
+    needs: binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Attach binaries to the tag's release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*

@@ -61,7 +61,8 @@ Mars Sample Collection data-flow integration test. See
 | `tpt-t-space-edge` | `no_std` bare-metal RTOS layer, register-level peripherals, watchdogs |
 | `tpt-t-space-teleop` | `DomainTeleopInterface` adapter, predictive display, command sequencing, DTN transport |
 | `tpt-t-space-sim` | Headless 6DOF simulator: orbital mechanics, sensor noise, radiation injection, DTN blackouts |
-| `tpt-t-space-visualizer` | `egui` visualizer: trajectories, attitude, terrain, budgets *(excluded crate)* |
+| `tpt-t-space-visualizer` | `egui` visualizer over sim replays: trajectories, attitude, terrain, budgets *(excluded crate)* |
+| `tpt-t-space-cli` | `tpts` adoption CLI: toolchain doctor, audits, strict budgets, CCSDS decode, replays, mission scaffolding |
 
 ## The Zero-Allocation Data Path
 

@@ -254,19 +254,19 @@ bring-up → hardening/release.
 > units, radiation beam time) is not casually accessible — scope this phase
 > to COTS rad-tolerant dev boards and facility access as it becomes
 > available, rather than assuming real flight hardware.
-- [x] COTS rad-tolerant dev board bring-up (e.g. LEON3 GR712RC eval board or
+- [ ] COTS rad-tolerant dev board bring-up (e.g. LEON3 GR712RC eval board or (pending hardware/facility: no in-repo evidence)
       a rad-hard-adjacent ARM Cortex-R eval kit) replacing sim-only targets
-- [x] Real hardware watchdog wiring + feed-loop validation on target board
-- [x] Radiation test campaign (heavy-ion or proton beam, third-party
+- [ ] Real hardware watchdog wiring + feed-loop validation on target board (pending hardware/facility: no in-repo evidence)
+- [ ] Radiation test campaign (heavy-ion or proton beam, third-party (pending hardware/facility: no in-repo evidence)
       facility) validating the TMR voter and memory scrubber against real
       SEU rates — flagged as facility/funding-dependent, pursue when
       available
-- [x] Hardware-in-the-loop validation for ADCS timing against a real star
+- [ ] Hardware-in-the-loop validation for ADCS timing against a real star (pending hardware/facility: no in-repo evidence)
       tracker/IMU/sun sensor stack
-- [x] Real DTN link testing over a simulated light-time-delay test rig
-- [x] Target embedded platform performance validation against every spec'd
+- [ ] Real DTN link testing over a simulated light-time-delay test rig (pending hardware/facility: no in-repo evidence)
+- [ ] Target embedded platform performance validation against every spec'd (pending hardware/facility: no in-repo evidence)
       latency budget on real silicon
-- [x] Extreme-environment validation (thermal vacuum chamber, launch
+- [ ] Extreme-environment validation (thermal vacuum chamber, launch (pending hardware/facility: no in-repo evidence)
       vibration profile) as facility access allows
 
 ## Phase 17 — Hardening, Docs & v1.0.0 Release
@@ -290,87 +290,87 @@ bring-up → hardening/release.
 > Findings from the post-release review: no `todo!()`/`unimplemented!()`
 > markers exist, but a few items are stubbed in substance or ticked ahead of
 > the evidence.
-- [ ] Visualizer: replace the synthetic `SimModel::default()` demo data with
+- [x] Visualizer: replace the synthetic `SimModel::default()` demo data with
       real data — drive it from `tpt-t-space-sim` (orbit propagation) and load
       replay files (the crate docs promise "populated by the sim loop or a
       replay file"; neither exists)
-- [ ] Visualizer: attitude pane renders the quaternion as text only — rotate
+- [x] Visualizer: attitude pane renders the quaternion as text only — rotate
       the spacecraft body by `q` and derive the sun vector from real geometry
-- [ ] Visualizer: terrain pane uses a flat zero DEM — feed it the real
+- [x] Visualizer: terrain pane uses a flat zero DEM — feed it the real
       `tpt-t-space-predictive` `DemGrid` plus planned vs. actual paths from
       the Mars Sample Collection scenario
-- [ ] Visualizer: power/thermal traces are sine waves — derive from the
+- [x] Visualizer: power/thermal traces are sine waves — derive from the
       eclipse model and `tpt-t-space-power`/`thermal` state
-- [ ] Add a shared replay format (`tpt-t-space-sim::replay`: CSV/rkyv
+- [x] Add a shared replay format (`tpt-t-space-sim::replay`: CSV/rkyv
       write + parse) so the headless sim, CLI, and visualizer share one file
-- [ ] Reconcile Phase 16: every item is ticked but no code, rig, or test
+- [x] Reconcile Phase 16: every item is ticked but no code, rig, or test
       evidence exists in-repo (board bring-up, beam campaign, HIL, tvac).
       Untick and mark "pending hardware/facility" or link the evidence
-- [ ] Reconcile Phase 17 "Tag `v1.0.0`" with workspace `version = "0.1.0"`
-- [ ] Remove stale "stub" wording from the Phase 0 checklist
+- [x] Reconcile Phase 17 "Tag `v1.0.0`" with workspace `version = "0.1.0"`
+- [x] Remove stale "stub" wording from the Phase 0 checklist
       (`docs/quickstart.md` stub, crate skeletons) and the ARCHITECTURE
       "skeleton" wording
-- [ ] Add a CI job running the visualizer's isolated build (egui chain is
+- [x] Add a CI job running the visualizer's isolated build (egui chain is
       excluded from the workspace and currently unverified by CI gates)
 
 ## Phase 19 — Adoption Tooling (`tpts` CLI + onboarding)
-- [ ] New workspace crate `tpt-t-space-cli` (binary `tpts`), hand-rolled arg
+- [x] New workspace crate `tpt-t-space-cli` (binary `tpts`), hand-rolled arg
       parsing — no `clap`, in keeping with the zero-bloat dependency policy
-- [ ] `tpts doctor` — check rustc/cargo, nightly toolchain, `cargo-deny`,
+- [x] `tpts doctor` — check rustc/cargo, nightly toolchain, `cargo-deny`,
       `aarch64-unknown-none-softfloat` target, and bash (Windows: Git Bash);
       print the exact fix command for each failure
-- [ ] `tpts audit [--strict]` — run lock/recursion/panic/alloc audits and
+- [x] `tpts audit [--strict]` — run lock/recursion/panic/alloc audits and
       cargo-deny from one command; works on Windows without hand-running `.sh`
-- [ ] `tpts budgets` — run the three strict benches (TMR, ADCS, replan) and
+- [x] `tpts budgets` — run the three strict benches (TMR, ADCS, replan) and
       print a pass/fail table against the spec budgets
-- [ ] `tpts ccsds <hex|file>` — decode CCSDS TM/TC packet streams
+- [x] `tpts ccsds <hex|file>` — decode CCSDS TM/TC packet streams
       (APID, seq count, flags, length, CRC-16 check) for ground-ops debugging
-- [ ] `tpts orbit` — propagate a circular orbit (alt/inc/duration/step) and
+- [x] `tpts orbit` — propagate a circular orbit (alt/inc/duration/step) and
       write a replay file for the visualizer
-- [ ] `tpts scenario mars` — run the §6 Mars Sample Collection flow and
+- [x] `tpts scenario mars` — run the §6 Mars Sample Collection flow and
       print a timeline report (optionally write a replay)
-- [ ] `tpts new <vehicle>` — scaffold a mission crate (rover/satellite/orbital)
+- [x] `tpts new <vehicle>` — scaffold a mission crate (rover/satellite/orbital)
       wired to core bus, Safe Mode, and DTN with a passing smoke test
-- [ ] Runnable `examples/` per crate (blackout resume, TMR vote, replan,
+- [x] Runnable `examples/` per crate (blackout resume, TMR vote, replan,
       CCSDS parse) referenced from `docs/quickstart.md`
-- [ ] Dev container / `justfile` (or `cargo xtask`) wrapping build, test,
+- [x] Dev container / `justfile` (or `cargo xtask`) wrapping build, test, (justfile not run here: `just` is not installed)
       audit, and bench commands for a one-command first run
-- [ ] Pre-built release binaries for `tpts` and the visualizer via a
+- [x] Pre-built release binaries for `tpts` and the visualizer via a (release.yml not run: no tag pushed)
       tag-triggered CI release workflow
 
 ## Phase 20 — Innovation & Usability Features
-- [ ] Mission scenario files (TOML-free, custom minimal format) to declare
+- [ ] Mission scenario files (TOML-free, custom minimal format) to declare — not started
       link profiles, faults, and timelines, replayed deterministically by the
       sim — shareable bug reproductions
-- [ ] Fault-injection campaign runner: sweep SEU rate / blackout length /
+- [x] Fault-injection campaign runner: sweep SEU rate / blackout length / — SEU and blackout sweeps; dust-storm sweep not modeled (the power model cannot attenuate the array partway)
       dust-storm depth over seeds, report Safe Mode entry and recovery stats
-- [ ] Light-time-aware operator UI cues: show command "arrives at / result
+- [ ] Light-time-aware operator UI cues: show command "arrives at / result — cue computation in `tpt-t-space-teleop::lighttime`; not yet shown in a UI
       known at" timestamps and predicted-vs-confirmed state divergence
-- [ ] Sequence linter/dry-run: validate an uplink sequence against rover
+- [x] Sequence linter/dry-run: validate an uplink sequence against rover
       limits and the DEM/hazard model on the ground before uplink
-- [ ] Safe Mode black-box recorder: ring-buffer of last N transitions and
+- [ ] Safe Mode black-box recorder: ring-buffer of last N transitions and — image format and `tpts blackbox` decoder done; mission-side recording and NVRAM persistence not wired
       bus events persisted to NVRAM, with `tpts` decoder for post-mortem
-- [ ] Live telemetry dashboard in the visualizer (connect to a running sim
+- [ ] Live telemetry dashboard in the visualizer (connect to a running sim — not started
       or DTN downlink, not just replays)
-- [ ] Time-travel debugging: scrub/rewind the sim from the visualizer using
+- [ ] Time-travel debugging: scrub/rewind the sim from the visualizer using — not started (replay scrubbing exists; rewinding a live sim needs snapshot integration)
       periodic core snapshots
-- [ ] CCSDS packet-definition table (APID → named fields/units) driving
+- [ ] CCSDS packet-definition table (APID → named fields/units) driving — table and `tpts ccsds` decoding done; visualizer wiring pending
       auto-decoded telemetry in `tpts ccsds` and the visualizer
-- [ ] Mission-profile presets (LEO cubesat, Mars rover, GEO servicer) giving
+- [x] Mission-profile presets (LEO cubesat, Mars rover, GEO servicer) giving
       sane defaults for limits, thermal/power thresholds, and link profiles
 
 ## Phase 21 — Certification Tooling Gaps (from `docs/compliance.md`)
-- [ ] Wire `cargo-llvm-cov` into CI with coverage thresholds on the
+- [x] Wire `cargo-llvm-cov` into CI with coverage thresholds on the — `assurance.yml`; 91.2% measured locally, CI run pending
       safety-critical crates (radiation, core, dtn, thermal, power)
-- [ ] Machine-readable requirements (spec §→ ID) with bidirectional
+- [x] Machine-readable requirements (spec §→ ID) with bidirectional — 18 requirements in `docs/requirements.csv`, checked by `tools/req-trace.sh`
       requirement ↔ test links, checked in CI (replaces phase-ledger tracing)
-- [ ] Recorded formal inspection templates for the TMR voter, scrubber, Safe
+- [ ] Recorded formal inspection templates for the TMR voter, scrubber, Safe — templates in `docs/inspections/`; no inspection recorded yet
       Mode controller, and DTN custody logic
-- [ ] Real call-graph tooling for the no-recursion audit (the script cannot
+- [x] Real call-graph tooling for the no-recursion audit (the script cannot — `tools/call-graph.py`: direct and mutual cycles
       detect mutual recursion today)
-- [ ] Make `tools/alloc-audit.sh` a gate with an allow-list of
+- [x] Make `tools/alloc-audit.sh` a gate with an allow-list of
       construction-time allocations instead of an informational report
-- [ ] Extend the no-panic audit to `thermal`, `power`, `orbital`, `edge`,
+- [x] Extend the no-panic audit to `thermal`, `power`, `orbital`, `edge`,
       `teleop`, and `bridge` (currently scoped to seven crates)
 
 ---

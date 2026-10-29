@@ -21,7 +21,8 @@ crates/
   tpt-t-space-edge/         # no_std bare-metal RTOS layer, watchdogs (Phase 11)
   tpt-t-space-teleop/       # DomainTeleopInterface adapter, predictive display, DTN transport (Phase 12)
   tpt-t-space-sim/          # headless 6DOF orbital mechanics, sensor + radiation + DTN models (Phase 13)
-  tpt-t-space-visualizer/   # egui renderer — excluded from workspace (Phase 13)
+  tpt-t-space-visualizer/   # egui renderer over sim replays — excluded from workspace (Phase 13, real data Phase 18)
+  tpt-t-space-cli/          # `tpts` adoption CLI: doctor, audits, budgets, CCSDS decode, replays, scaffolding (Phase 19)
 ```
 
 ## Dependency Direction

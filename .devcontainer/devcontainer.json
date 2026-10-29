@@ -1,0 +1,10 @@
+{
+  "name": "tpt-teleop-space",
+  "image": "mcr.microsoft.com/devcontainers/rust:1-bookworm",
+  "postCreateCommand": "rustup target add aarch64-unknown-none-softfloat && cargo install just cargo-deny --locked",
+  "customizations": {
+    "vscode": {
+      "extensions": ["rust-lang.rust-analyzer", "tamasfe.even-better-toml"]
+    }
+  }
+}
