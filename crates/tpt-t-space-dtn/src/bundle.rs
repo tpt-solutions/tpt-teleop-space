@@ -364,12 +364,16 @@ impl BundleStore {
             self.scratch = written;
             return Err(StoreError::Corrupt);
         }
-        let payload = self.sector_payload_slice(sector)?.to_vec();
+        // The CRC covers the new metadata and the untouched payload. Compute
+        // it over the image slice before the writes below, so the payload is
+        // never copied out (custody transfer stays allocation-free).
+        let crc = crc32(
+            crc32(0, written.as_slice()),
+            self.sector_payload_slice(sector)?,
+        );
         let base = self.sector_base(sector)?;
         self.image[base + sector::HEADER..base + sector::HEADER + written.len()]
             .copy_from_slice(written.as_slice());
-        let crc = crc32(0, written.as_slice());
-        let crc = crc32(crc, &payload);
         self.image[base + sector::CRC..base + sector::CRC + 4].copy_from_slice(&crc.to_le_bytes());
         self.scratch = written;
         Ok(())
@@ -529,6 +533,7 @@ mod tests {
         assert_eq!(rest.len(), 24);
     }
 
+    // REQ: DTN-002
     #[test]
     fn reboot_recovery_revalidates_crc() {
         let mut store = BundleStore::new(SECTORS, SECTOR);
@@ -558,6 +563,7 @@ mod tests {
         assert_eq!(fresh2.recover(&image).unwrap(), 2);
     }
 
+    // REQ: DTN-002
     #[test]
     fn custody_acceptance_is_recorded_in_place() {
         let mut store = BundleStore::new(SECTORS, SECTOR);

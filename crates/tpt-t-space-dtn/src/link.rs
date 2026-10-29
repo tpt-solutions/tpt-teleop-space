@@ -118,31 +118,36 @@ impl DtnAgent {
     ///
     /// Returns `None` when the link is up but the store is drained.
     pub fn poll(&mut self) -> Option<Result<Egress, LinkError>> {
-        if self.link != LinkState::Up {
-            return Some(Err(LinkError::LinkDown));
+        // A loop, not recursion: a fully transmitted sector is freed and the
+        // next allocated one is considered, so the loop ends when the store
+        // drains or a flit is emitted.
+        loop {
+            if self.link != LinkState::Up {
+                return Some(Err(LinkError::LinkDown));
+            }
+            let sector = self.store.allocated_sectors().next()?;
+            let payload_len = match self.store.bundle_meta(sector) {
+                Ok(m) => m.payload_len,
+                Err(e) => return Some(Err(LinkError::Store(e))),
+            };
+            let cursor = self.store.cursor(sector).unwrap_or(0);
+            if cursor >= payload_len {
+                // Fully transmitted but not yet freed (custody pending):
+                // release it now — the ack path (`deliver`) is explicit.
+                let _ = self.store.free(sector);
+                continue;
+            }
+            let to = (cursor + FLIT_BYTES).min(payload_len);
+            if self.store.set_cursor(sector, to).is_err() {
+                return Some(Err(LinkError::Store(StoreError::BadSector)));
+            }
+            return Some(Ok(Egress {
+                sector,
+                from: cursor,
+                to,
+                final_flit: to >= payload_len,
+            }));
         }
-        let sector = self.store.allocated_sectors().next()?;
-        let payload_len = match self.store.bundle_meta(sector) {
-            Ok(m) => m.payload_len,
-            Err(e) => return Some(Err(LinkError::Store(e))),
-        };
-        let cursor = self.store.cursor(sector).unwrap_or(0);
-        if cursor >= payload_len {
-            // Fully transmitted but not yet freed (custody pending):
-            // release it now — the ack path (`deliver`) is explicit.
-            let _ = self.store.free(sector);
-            return self.poll();
-        }
-        let to = (cursor + FLIT_BYTES).min(payload_len);
-        if self.store.set_cursor(sector, to).is_err() {
-            return Some(Err(LinkError::Store(StoreError::BadSector)));
-        }
-        Some(Ok(Egress {
-            sector,
-            from: cursor,
-            to,
-            final_flit: to >= payload_len,
-        }))
     }
 
     /// Confirm the destination custodian accepted the final flit; releases
@@ -266,6 +271,7 @@ mod tests {
         DtnAgent::new(BundleStore::new(8, 512))
     }
 
+    // REQ: DTN-001
     #[test]
     fn link_down_persists_everything() {
         let mut a = agent();
@@ -282,6 +288,7 @@ mod tests {
         assert_eq!(a.store().cursor(s).unwrap(), 0);
     }
 
+    // REQ: DTN-001
     #[test]
     fn flits_resume_exactly_at_cursor() {
         let mut a = agent();

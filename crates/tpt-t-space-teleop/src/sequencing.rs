@@ -94,12 +94,16 @@ impl SequenceExecutor {
     /// Load an uploaded sequence.
     #[must_use]
     pub fn new(steps: Vec<Step>) -> Self {
+        // Each step appends at most one completion record and `next` only
+        // advances, so `steps.len()` is an upper bound: the log never
+        // reallocates on the control path.
+        let done = Vec::with_capacity(steps.len());
         Self {
             steps,
             next: 0,
             remaining_forward_m: 0.0,
             remaining_turn_deg: 0.0,
-            done: Vec::new(),
+            done,
         }
     }
 
