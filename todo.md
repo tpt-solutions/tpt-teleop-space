@@ -339,22 +339,22 @@ bring-up → hardening/release.
       tag-triggered CI release workflow
 
 ## Phase 20 — Innovation & Usability Features
-- [ ] Mission scenario files (TOML-free, custom minimal format) to declare — not started
+- [ ] Mission scenario files (TOML-free, custom minimal format) to declare — `tpts campaign run FILE` reads fault sweeps; link profiles and timelines not yet
       link profiles, faults, and timelines, replayed deterministically by the
       sim — shareable bug reproductions
 - [x] Fault-injection campaign runner: sweep SEU rate / blackout length / — SEU and blackout sweeps; dust-storm sweep not modeled (the power model cannot attenuate the array partway)
       dust-storm depth over seeds, report Safe Mode entry and recovery stats
-- [ ] Light-time-aware operator UI cues: show command "arrives at / result — cue computation in `tpt-t-space-teleop::lighttime`; not yet shown in a UI
+- [ ] Light-time-aware operator UI cues: show command "arrives at / result — the visualizer's Link pane shows arrival and result-known times; predicted-vs-confirmed divergence is not in the UI yet
       known at" timestamps and predicted-vs-confirmed state divergence
 - [x] Sequence linter/dry-run: validate an uplink sequence against rover
       limits and the DEM/hazard model on the ground before uplink
-- [ ] Safe Mode black-box recorder: ring-buffer of last N transitions and — image format and `tpts blackbox` decoder done; mission-side recording and NVRAM persistence not wired
+- [ ] Safe Mode black-box recorder: ring-buffer of last N transitions and — ring, CRC image, NVRAM restore, `tpts blackbox`, and the Mars flow record into it; bus events and periodic saves from the running mission are not wired
       bus events persisted to NVRAM, with `tpts` decoder for post-mortem
 - [ ] Live telemetry dashboard in the visualizer (connect to a running sim — not started
       or DTN downlink, not just replays)
 - [ ] Time-travel debugging: scrub/rewind the sim from the visualizer using — not started (replay scrubbing exists; rewinding a live sim needs snapshot integration)
       periodic core snapshots
-- [ ] CCSDS packet-definition table (APID → named fields/units) driving — table and `tpts ccsds` decoding done; visualizer wiring pending
+- [ ] CCSDS packet-definition table (APID → named fields/units) driving — table and `tpts ccsds` decoding done; the visualizer does not take CCSDS input yet
       auto-decoded telemetry in `tpts ccsds` and the visualizer
 - [x] Mission-profile presets (LEO cubesat, Mars rover, GEO servicer) giving
       sane defaults for limits, thermal/power thresholds, and link profiles
