@@ -79,7 +79,9 @@ pub fn run(args: &[String]) -> CliResult {
             print_blackout(&BLACKOUT_HOURS, seeds, 60.0);
             Ok(ExitCode::SUCCESS)
         }
-        Some(other) => Err(format!("unknown campaign `{other}` (available: seu, blackout, run)")),
+        Some(other) => Err(format!(
+            "unknown campaign `{other}` (available: seu, blackout, run)"
+        )),
         None => Err("campaign needs a name (available: seu, blackout, run)".to_owned()),
     }
 }
@@ -127,15 +129,23 @@ pub fn parse(text: &str) -> Result<Sweep, String> {
 
 fn one<T: std::str::FromStr>(values: &[&str], at: impl Fn(String) -> String) -> Result<T, String> {
     match values {
-        [v] => v.parse().map_err(|_| at(format!("`{v}` is not a valid value"))),
+        [v] => v
+            .parse()
+            .map_err(|_| at(format!("`{v}` is not a valid value"))),
         _ => Err(at("expected exactly one value".to_owned())),
     }
 }
 
-fn many<T: std::str::FromStr>(values: &[&str], at: impl Fn(String) -> String) -> Result<Vec<T>, String> {
+fn many<T: std::str::FromStr>(
+    values: &[&str],
+    at: impl Fn(String) -> String,
+) -> Result<Vec<T>, String> {
     values
         .iter()
-        .map(|v| v.parse().map_err(|_| at(format!("`{v}` is not a valid value"))))
+        .map(|v| {
+            v.parse()
+                .map_err(|_| at(format!("`{v}` is not a valid value")))
+        })
         .collect()
 }
 
@@ -180,8 +190,9 @@ mod tests {
 
     #[test]
     fn keys_override_defaults_and_comments_are_ignored() {
-        let s = parse("# repro for bug 42\nseeds 3\nseu-rates 0.1 0.5 # two rates\nblackout-hours 2\n")
-            .expect("parses");
+        let s =
+            parse("# repro for bug 42\nseeds 3\nseu-rates 0.1 0.5 # two rates\nblackout-hours 2\n")
+                .expect("parses");
         assert_eq!(s.seeds, 3);
         assert_eq!(s.seu_rates, vec![0.1, 0.5]);
         assert_eq!(s.blackout_hours, vec![2.0]);
@@ -190,8 +201,16 @@ mod tests {
 
     #[test]
     fn errors_name_the_line() {
-        assert!(parse("seeds 2\nseeds two\n").unwrap_err().starts_with("line 2:"));
-        assert!(parse("warp 9\n").unwrap_err().contains("unknown key `warp`"));
+        assert!(
+            parse("seeds 2\nseeds two\n")
+                .unwrap_err()
+                .starts_with("line 2:")
+        );
+        assert!(
+            parse("warp 9\n")
+                .unwrap_err()
+                .contains("unknown key `warp`")
+        );
         assert!(parse("seeds\n").unwrap_err().contains("needs a value"));
         assert!(parse("seeds 0\n").unwrap_err().contains("must be positive"));
     }

@@ -641,7 +641,10 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
                 to: MissionState::SafeMode,
             },
         );
-        recorder.record(now, BoxEvent::SafeMode(SafeModeCause::PowerSurvivalThreshold));
+        recorder.record(
+            now,
+            BoxEvent::SafeMode(SafeModeCause::PowerSurvivalThreshold),
+        );
     }
     clock.step_sim(2.0 * HOUR_S);
     note(
@@ -831,7 +834,11 @@ mod tests {
         let mut records = Vec::new();
         tpt_t_space_core::blackbox::decode_each(&run.blackbox, |r| records.push(r))
             .expect("the image decodes");
-        assert_eq!(records.len(), 4, "two approach moves, safe-mode entry and cause");
+        assert_eq!(
+            records.len(),
+            4,
+            "two approach moves, safe-mode entry and cause"
+        );
         assert!(matches!(
             records[2].event,
             BoxEvent::Transition {

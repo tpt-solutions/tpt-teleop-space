@@ -61,7 +61,10 @@ pub fn scenario(args: &[String]) -> CliResult {
     write_replay(&run.replay, out)?;
     if let Some(path) = flag_value(args, "--blackbox")? {
         std::fs::write(path, &run.blackbox).map_err(|e| format!("{path}: {e}"))?;
-        println!("black-box image written to {path} ({} bytes)", run.blackbox.len());
+        println!(
+            "black-box image written to {path} ({} bytes)",
+            run.blackbox.len()
+        );
     }
     Ok(ExitCode::SUCCESS)
 }
