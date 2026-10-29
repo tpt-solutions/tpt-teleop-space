@@ -1,4 +1,4 @@
-//! Central event-loop skeleton for routing spacecraft events off the hot
+//! Central event loop for routing spacecraft events off the hot
 //! path. Drains a [`SpscRing`](crate::bus::SpscRing) (or a whole
 //! [`Bus`](crate::bus::Bus)) and dispatches each event to a handler.
 //! Intentionally allocation-free in [`EventLoop::step`] and

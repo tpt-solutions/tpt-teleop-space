@@ -191,6 +191,7 @@ mod tests {
         m.transition(MissionState::Cruise).unwrap();
     }
 
+    // REQ: FSM-001
     #[test]
     fn illegal_jumps_rejected() {
         let mut m = StateMachine::new(MissionState::Cruise);

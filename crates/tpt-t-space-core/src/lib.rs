@@ -7,7 +7,7 @@
 //!   → Safe Mode) for rovers, orbiters, and deep-space probes.
 //! * [`bus`] — lock-free single-producer / single-consumer ring buffers used
 //!   for zero-alloc inter-crate event routing on the hot path.
-//! * [`event_loop`] — a central event-loop skeleton that drains the bus and
+//! * [`event_loop`] — a central event loop that drains the bus and
 //!   dispatches events without allocating per tick.
 //! * [`snapshot`] — persistent state snapshotting into a caller-owned NVRAM
 //!   byte buffer, CRC32-guarded, so the loop survives processor resets
@@ -24,6 +24,7 @@
 //! plane makes no per-event heap allocations and takes no locks on the
 //! steady-state path.
 
+pub mod blackbox;
 pub mod bus;
 pub mod crc;
 pub mod event_loop;

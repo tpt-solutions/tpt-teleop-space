@@ -223,6 +223,7 @@ mod tests {
         }
     }
 
+    // REQ: SM-001
     #[test]
     fn atomic_entry_runs_all_actions_in_spec_order() {
         let mut c = SafeModeController::new();
@@ -237,6 +238,7 @@ mod tests {
         assert_eq!(c.transitions(), 1);
     }
 
+    // REQ: SM-002
     #[test]
     fn reentry_is_idempotent_no_action_replay() {
         let mut c = SafeModeController::new();
