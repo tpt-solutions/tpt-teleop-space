@@ -7,6 +7,9 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "The space-domain teleoperation adapter: DomainTeleopInterface implementation with predictive display, uploaded command sequencing, bandwidth optimization, and DTN transport"
+readme = "README.md"
+keywords = ["teleoperation", "predictive-display", "bandwidth", "dtn", "space"]
+categories = ["aerospace", "science::robotics"]
 
 [dependencies]
 tpt-t-domain-bridge = { workspace = true }

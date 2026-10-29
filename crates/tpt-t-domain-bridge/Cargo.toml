@@ -7,6 +7,9 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "Domain Teleoperation Interface (DTI): universal wire types, safety state machine, and teleop-assist API shared by every tpt-teleop domain repo"
+readme = "README.md"
+keywords = ["teleoperation", "dti", "rkyv", "safety", "wire-format"]
+categories = ["aerospace", "science::robotics"]
 
 [dependencies]
 rkyv = { workspace = true, features = ["bytecheck"] }

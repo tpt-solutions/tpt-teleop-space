@@ -7,6 +7,9 @@ license = "MIT OR Apache-2.0"
 authors = ["TPT Solutions"]
 repository = "https://github.com/tpt-solutions/tpt-teleop-space"
 description = "Attitude Determination and Control System for tpt-teleop-space: SIMD-accelerated MEKF, reaction wheels, momentum dumping, formation flying (nightly-only)"
+readme = "README.md"
+keywords = ["adcs", "mekf", "attitude-control", "reaction-wheel", "simd"]
+categories = ["aerospace"]
 
 [dependencies]
 tpt-t-space-core = { path = "../tpt-t-space-core" }

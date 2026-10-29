@@ -7,6 +7,9 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "Zero-allocation, zero-copy CCSDS Space Packet / TM / TC parsers for tpt-teleop-space"
+readme = "README.md"
+keywords = ["ccsds", "space-packet", "zero-copy", "parser", "telemetry"]
+categories = ["aerospace::space-protocols", "parser-implementations"]
 
 # No dependencies: parsing is borrowed views over caller-owned bytes.
 

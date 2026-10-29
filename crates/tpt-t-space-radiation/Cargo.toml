@@ -7,6 +7,9 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "Software radiation tolerance for tpt-teleop-space: Hamming(72,64) memory scrubbing with CRC32 region walk, <50µs TMR voter, and SEU detection/recovery bookkeeping"
+readme = "README.md"
+keywords = ["seu", "tmr", "hamming-code", "radiation", "fault-tolerance"]
+categories = ["aerospace", "embedded"]
 
 [dependencies]
 tpt-t-space-core = { workspace = true }

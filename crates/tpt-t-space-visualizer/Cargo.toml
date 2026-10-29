@@ -7,6 +7,9 @@ license = "MIT OR Apache-2.0"
 authors = ["TPT Solutions"]
 repository = "https://github.com/tpt-solutions/tpt-teleop-space"
 description = "egui visualizer for tpt-teleop-space: orbital trajectories, attitude, rover terrain, power/thermal budgets (excluded from the workspace build)"
+readme = "README.md"
+keywords = ["egui", "visualization", "spacecraft", "orbit", "telemetry"]
+categories = ["aerospace::simulation", "gui"]
 
 # Excluded from the parent workspace: the egui/winit chain sits outside
 # the strict MIT-chain deny.toml scope the workspace members are audited

@@ -7,6 +7,9 @@ license = "MIT OR Apache-2.0"
 authors = ["TPT Solutions"]
 repository = "https://github.com/tpt-solutions/tpt-teleop-space"
 description = "Planetary surface operations for tpt-teleop-space: wheel/VIO odometry, autonomous hazard avoidance, science sequencing with rollback, wheel health (nightly-only)"
+readme = "README.md"
+keywords = ["planetary-rover", "odometry", "hazard-avoidance", "vio", "autonomy"]
+categories = ["aerospace", "science::robotics"]
 
 [dependencies]
 tpt-t-space-core = { path = "../tpt-t-space-core" }

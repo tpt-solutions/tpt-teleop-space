@@ -7,6 +7,9 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "Onboard predictive autonomy for tpt-teleop-space: bounded MPC, stereo DEM generation, candidate-trajectory path planning, and the reusable autonomous decision framework"
+readme = "README.md"
+keywords = ["mpc", "path-planning", "dem", "autonomy", "stereo-vision"]
+categories = ["science::robotics", "algorithms", "aerospace"]
 
 [[bench]]
 name = "replan"

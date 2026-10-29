@@ -7,6 +7,9 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "Thermal management for tpt-teleop-space: heater, radiator, and battery temperature monitoring with hysteresis and Safe Mode triggers"
+readme = "README.md"
+keywords = ["thermal", "spacecraft", "hysteresis", "safe-mode", "monitoring"]
+categories = ["aerospace", "embedded"]
 
 [dependencies]
 tpt-t-space-core = { workspace = true }

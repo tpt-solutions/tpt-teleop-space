@@ -7,6 +7,9 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "Power subsystem management for tpt-teleop-space: solar array pointing, battery cycle tracking, eclipse load shedding, and the dust-storm survival trigger"
+readme = "README.md"
+keywords = ["spacecraft", "solar-array", "battery", "eclipse", "power-management"]
+categories = ["aerospace", "embedded"]
 
 [dependencies]
 tpt-t-space-core = { workspace = true }

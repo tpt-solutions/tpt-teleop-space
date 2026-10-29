@@ -7,6 +7,9 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "Delay-Tolerant Networking for tpt-teleop-space: BPv7-style bundles with custody transfer, LTP sessions, and NVRAM store-and-forward across multi-hour blackouts"
+readme = "README.md"
+keywords = ["dtn", "bpv7", "ltp", "store-and-forward", "spacecraft"]
+categories = ["aerospace::space-protocols", "network-programming"]
 
 [dependencies]
 tpt-t-space-core = { workspace = true }

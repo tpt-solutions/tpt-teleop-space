@@ -7,6 +7,9 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "Core foundation for tpt-teleop-space: mission state machine, lock-free message bus, central event loop, persistent snapshots, and the shared rkyv wire-type prelude"
+readme = "README.md"
+keywords = ["spacecraft", "mission-control", "lock-free", "message-bus", "snapshot"]
+categories = ["aerospace", "concurrency"]
 
 [dependencies]
 rkyv = { workspace = true }

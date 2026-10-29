@@ -7,6 +7,9 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "Rendezvous and Proximity Operations for tpt-teleop-space: 6DOF relative navigation, autonomous docking via MPC, and 7-DOF robotic arm manipulation"
+readme = "README.md"
+keywords = ["rendezvous", "docking", "robotic-arm", "inverse-kinematics", "mpc"]
+categories = ["aerospace", "science::robotics"]
 
 [dependencies]
 tpt-t-space-core = { workspace = true }

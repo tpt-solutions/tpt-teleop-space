@@ -7,6 +7,9 @@ license = "MIT OR Apache-2.0"
 authors = ["TPT Solutions"]
 repository = "https://github.com/tpt-solutions/tpt-teleop-space"
 description = "Bare-metal RTOS execution layer for tpt-teleop-space: direct register-level peripheral control, hardware watchdog management, and static task scheduling (no_std)"
+readme = "README.md"
+keywords = ["no-std", "bare-metal", "rtos", "watchdog", "embedded"]
+categories = ["no-std", "embedded", "aerospace"]
 
 # The crate is `#![no_std]`; host builds run the unit tests with `std`
 # enabled via the test cfg (see lib.rs). Bare-metal validation:
