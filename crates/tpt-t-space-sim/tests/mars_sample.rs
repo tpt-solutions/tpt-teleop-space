@@ -19,6 +19,7 @@
 
 use tpt_t_space_sim::scenario::mars_sample;
 
+// REQ: MARS-001
 #[test]
 fn mars_sample_collection_data_flow() {
     let run = mars_sample().expect("the §6 flow completes");

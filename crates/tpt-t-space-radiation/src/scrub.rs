@@ -282,6 +282,7 @@ mod tests {
         assert_eq!(r.crc_ok, Some(true));
     }
 
+    // REQ: SCR-001
     #[test]
     fn single_bit_flips_are_corrected_everywhere() {
         // Sweep one flipped bit through every byte/bit of word 5.
@@ -303,6 +304,7 @@ mod tests {
         }
     }
 
+    // REQ: SCR-001
     #[test]
     fn flipped_parity_bit_is_healed() {
         let (mut data, mut parity) = region(8);
@@ -315,6 +317,7 @@ mod tests {
         assert_eq!(r2.bits_corrected, 0);
     }
 
+    // REQ: SCR-002
     #[test]
     fn double_bit_flip_is_detected_not_silently_accepted() {
         let (mut data, mut parity) = region(8);
@@ -326,6 +329,7 @@ mod tests {
         assert_eq!(r.bits_corrected, 0);
     }
 
+    // REQ: SCR-003
     #[test]
     fn crc_backstop_catches_multi_word_corruption() {
         let (mut data, mut parity) = region(32);

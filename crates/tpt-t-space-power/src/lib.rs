@@ -380,6 +380,7 @@ mod tests {
         assert!(p.load_powered(6));
     }
 
+    // REQ: PWR-001
     #[test]
     fn dust_storm_triggers_survival_safe_mode() {
         let mut p = PowerSubsystem::new(array(), Battery::new(2000.0));
@@ -394,6 +395,7 @@ mod tests {
         );
     }
 
+    // REQ: PWR-001
     #[test]
     fn brief_shadow_does_not_trigger() {
         let mut p = PowerSubsystem::new(array(), Battery::new(2000.0));

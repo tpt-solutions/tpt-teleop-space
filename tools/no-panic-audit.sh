@@ -5,14 +5,15 @@
 # on flight hardware aborts the mission code. This scan reports `unwrap()`,
 # `expect()`, `panic!`, `unreachable!`, `todo!`, and `unimplemented!` in
 # the library source of the *hot-path crates* (radiation TMR, predictive
-# planner, dtn, core bus, ccsds, satellite ADCS, rover). Those crates must
+# planner, dtn, core bus, ccsds, satellite ADCS, rover, thermal, power,
+# orbital, edge, teleop, and the domain bridge). Those crates must
 # stay clean in STRICT mode. `#[cfg(test)]` test modules inside src/ are
 # stripped before the scan — they are not flight code.
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PANIC_PATTERNS='\.unwrap\(|\.expect\(|panic!|unreachable!|todo!|unimplemented!'
-HOT_CRATES='tpt-t-space-radiation|tpt-t-space-predictive|tpt-t-space-dtn|tpt-t-space-core|tpt-t-space-satellite|tpt-t-space-rover|tpt-t-space-ccsds'
+HOT_CRATES='tpt-t-space-radiation|tpt-t-space-predictive|tpt-t-space-dtn|tpt-t-space-core|tpt-t-space-satellite|tpt-t-space-rover|tpt-t-space-ccsds|tpt-t-space-thermal|tpt-t-space-power|tpt-t-space-orbital|tpt-t-space-edge|tpt-t-space-teleop|tpt-t-domain-bridge'
 
 STRICT="${TPT_NO_PANIC_STRICT:-0}"
 fail=0

@@ -1,0 +1,24 @@
+# Construction-time and error-path allocations in the hot-path crates.
+#
+# Format: crate|path|needle|reason
+#   * path is repo-relative; needle is a literal substring of the line.
+#   * An entry that matches no line fails the gate (STALE), so the list
+#     cannot outlive the code it describes.
+#
+# Adding an entry is a review decision: the reason must say why the
+# allocation cannot run on a steady-state control tick.
+
+tpt-t-space-predictive|crates/tpt-t-space-predictive/src/dem.rs|vec![0.0; n]|DemGrid::new: exact-size buffers allocated once at construction
+tpt-t-space-predictive|crates/tpt-t-space-predictive/src/dem.rs|vec![0; n]|DemGrid::new: exact-size vote counts allocated once at construction
+tpt-t-space-predictive|crates/tpt-t-space-predictive/src/mpc.rs|vec![[0.0; N]; HOR + 1]|Mpc::new: fixed horizon trajectory buffer allocated once at construction
+tpt-t-space-predictive|crates/tpt-t-space-predictive/src/mpc.rs|vec![[0.0; M]; HOR]|Mpc::new: fixed horizon input buffer allocated once at construction
+tpt-t-space-dtn|crates/tpt-t-space-dtn/src/bundle.rs|image: vec![0xFF; sectors * sector_bytes]|BundleStore::new: NVRAM image allocated once at construction
+tpt-t-space-dtn|crates/tpt-t-space-dtn/src/bundle.rs|scratch: rkyv::util::AlignedVec::new()|BundleStore::new: scratch starts empty and is reused for every serialize
+tpt-t-space-dtn|crates/tpt-t-space-dtn/src/bundle.rs|aligned_view: core::cell::RefCell::new(rkyv::util::AlignedVec::new())|BundleStore::new: aligned read buffer allocated once at construction
+tpt-t-space-dtn|crates/tpt-t-space-dtn/src/bundle.rs|self.scratch = rkyv::util::AlignedVec::new();|error path only: scratch is reset after a failed serialize and regrows on the next call
+tpt-t-space-core|crates/tpt-t-space-core/src/snapshot.rs|let mut scratch = AlignedVec::new();|snapshot flush: runs at checkpoint time, not on a control tick
+tpt-t-space-core|crates/tpt-t-space-core/src/snapshot.rs|let mut aligned: AlignedVec = AlignedVec::new();|snapshot restore: runs at reboot, not on a control tick
+tpt-t-space-core|crates/tpt-t-space-core/src/wire.rs|.to_vec(),|serialize(): encode-to-Vec helper with test callers only; no flight-path caller
+tpt-t-domain-bridge|crates/tpt-t-domain-bridge/src/wire.rs|.to_vec(),|serialize(): encode-to-Vec helper with test callers only; no flight-path caller
+tpt-t-space-teleop|crates/tpt-t-space-teleop/src/lint.rs|let mut issues = Vec::new();|ground-side uplink linter: runs on the ground before an uplink, never on the flight path
+tpt-t-space-teleop|crates/tpt-t-space-teleop/src/lighttime.rs|format!(|operator text cue for the display refresh: ground-side, never on a control tick

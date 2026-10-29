@@ -21,6 +21,7 @@ const HOUR_US: u64 = 3_600 * 1_000_000;
 const SECTORS: usize = 8;
 const SECTOR_BYTES: usize = 1024;
 
+// REQ: DTN-001
 #[test]
 fn multi_hour_blackout_with_reset_and_exact_resume() {
     let t0 = 12 * HOUR_US; // mission day 0.5

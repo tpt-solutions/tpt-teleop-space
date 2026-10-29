@@ -247,6 +247,7 @@ mod tests {
         assert!(plan.best.speed > limits.speed_range.0);
     }
 
+    // REQ: PRD-001
     #[test]
     fn hazard_ahead_forces_a_detour() {
         let mut dem = flat_dem();

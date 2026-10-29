@@ -1,0 +1,19 @@
+id,crate,source,requirement
+TMR-001,tpt-t-space-radiation,todo Phase 3,A single diverging core is masked and flagged for watchdog reset
+TMR-002,tpt-t-space-radiation,todo Phase 3,Total divergence distrusts all cores and produces no silent vote
+TMR-003,tpt-t-space-radiation,todo Phase 3,The divergence limit gates reset flagging
+SCR-001,tpt-t-space-radiation,todo Phase 3,Single-bit errors in static memory are corrected by Hamming code
+SCR-002,tpt-t-space-radiation,todo Phase 3,Double-bit errors are detected and never silently accepted
+SCR-003,tpt-t-space-radiation,todo Phase 3,A CRC backstop catches multi-word corruption
+SM-001,tpt-t-space-core,todo Phase 6,Safe Mode entry is atomic and runs every action in spec order
+SM-002,tpt-t-space-core,todo Phase 6,Re-entering Safe Mode does not replay its actions
+FSM-001,tpt-t-space-core,todo Phase 2,Illegal mission-state transitions are rejected
+DTN-001,tpt-t-space-dtn,todo Phase 5,Link loss keeps in-flight state and transmission resumes at the saved cursor
+DTN-002,tpt-t-space-dtn,todo Phase 5,Custody acceptance is recorded in place and survives reboot CRC revalidation
+CCS-001,tpt-t-space-ccsds,todo Phase 4,Truncated or malformed packets are rejected without panicking
+CCS-002,tpt-t-space-ccsds,todo Phase 4,Command packets with a corrupted CRC-16 are rejected
+THM-001,tpt-t-space-thermal,todo Phase 6,A battery survival limit trips only after debounce
+PWR-001,tpt-t-space-power,todo Phase 6,Output loss below the survival floor triggers Safe Mode and a brief shadow does not
+PRD-001,tpt-t-space-predictive,spec §6,A slope ahead forces a detour and the planner never picks a straight path into it
+MARS-001,tpt-t-space-sim,spec §6,The Mars Sample Collection flow completes end to end
+REP-001,tpt-t-space-sim,todo Phase 18,Replay files round-trip exactly and report the failing line

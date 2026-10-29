@@ -331,6 +331,7 @@ impl Default for ThermalSubsystem {
 mod tests {
     use super::*;
 
+    // REQ: THM-001
     #[test]
     fn battery_survival_limit_triggers_after_debounce() {
         let mut t = ThermalSubsystem::new();
@@ -346,6 +347,7 @@ mod tests {
         assert_ne!(t.health_bits() & (1 << 8), 0);
     }
 
+    // REQ: THM-001
     #[test]
     fn single_noisy_sample_does_not_trigger() {
         let mut t = ThermalSubsystem::new();

@@ -1,0 +1,35 @@
+name: assurance
+
+# Certification-readiness gates (Phase 21): line coverage on the
+# safety-critical crates and requirement ↔ test traceability.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - uses: Swatinem/rust-cache@v2
+      - name: Line coverage gate (safety-critical crates, >= 90%)
+        run: |
+          cargo llvm-cov \
+            -p tpt-t-space-radiation -p tpt-t-space-core -p tpt-t-space-dtn \
+            -p tpt-t-space-thermal -p tpt-t-space-power \
+            --fail-under-lines 90 --summary-only
+
+  traceability:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Requirement ↔ test traceability
+        run: bash tools/req-trace.sh

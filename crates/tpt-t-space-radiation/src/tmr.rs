@@ -147,6 +147,7 @@ mod tests {
         }
     }
 
+    // REQ: TMR-001
     #[test]
     fn minority_result_is_masked_from_any_core() {
         for bad in 0..3 {
@@ -165,6 +166,7 @@ mod tests {
         }
     }
 
+    // REQ: TMR-002
     #[test]
     fn total_divergence_distrusts_all_cores() {
         let mut v = TmrVoter::default();
@@ -177,6 +179,7 @@ mod tests {
         assert_eq!(v.take_reset_requests(), 0b111);
     }
 
+    // REQ: TMR-001
     #[test]
     fn reset_requests_clear_after_take() {
         let mut v = TmrVoter::default();
@@ -186,6 +189,7 @@ mod tests {
         assert_eq!(v.take_reset_requests(), 0);
     }
 
+    // REQ: TMR-003
     #[test]
     fn divergence_limit_gates_flagging() {
         let mut v = TmrVoter::new(3);
