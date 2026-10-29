@@ -12,6 +12,7 @@
 
 use std::time::Instant;
 
+use tpt_t_space_core::blackbox::{BlackBox, Event as BoxEvent, encoded_capacity};
 use tpt_t_space_core::machine::{MissionState, StateMachine};
 use tpt_t_space_core::safe_mode::{SafeModeActions, SafeModeCause, SafeModeController};
 use tpt_t_space_dtn::bundle::{Bundle, BundleStore, CustodyState, EndpointId, Priority};
@@ -375,6 +376,8 @@ pub struct MarsRun {
     pub telemetry_chunks: u64,
     /// Final sim time, days.
     pub sim_days: f64,
+    /// The encoded Safe Mode black-box image (`tpts blackbox` decodes it).
+    pub blackbox: Vec<u8>,
     /// The rover's pose trace as a replay (terrain + planned/actual paths).
     pub replay: Replay,
 }
@@ -390,6 +393,7 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
     let mut clock = SimClock::new(1.0);
     let link = LinkProfile::mars_surface();
     let mut mission = StateMachine::new(MissionState::Cruise);
+    let mut recorder = BlackBox::<16>::new();
     let mut events = Vec::new();
 
     // 1. The command: Earth uplinks "Proceed to Waypoint Alpha and collect
@@ -434,9 +438,23 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
     mission
         .transition(MissionState::Approach)
         .map_err(|_| ScenarioError("cruise to approach"))?;
+    recorder.record(
+        0,
+        BoxEvent::Transition {
+            from: MissionState::Cruise,
+            to: MissionState::Approach,
+        },
+    );
     mission
         .transition(MissionState::Operations)
         .map_err(|_| ScenarioError("approach to operations"))?;
+    recorder.record(
+        0,
+        BoxEvent::Transition {
+            from: MissionState::Approach,
+            to: MissionState::Operations,
+        },
+    );
 
     // 2. The blackout: Mars rotates; the rover is alone for hours.
     let mut blackout_s = 0.0;
@@ -615,6 +633,15 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
         mission
             .transition(MissionState::SafeMode)
             .map_err(|_| ScenarioError("operations to safe mode"))?;
+        let now = clock.sim_s() as u32;
+        recorder.record(
+            now,
+            BoxEvent::Transition {
+                from: MissionState::Operations,
+                to: MissionState::SafeMode,
+            },
+        );
+        recorder.record(now, BoxEvent::SafeMode(SafeModeCause::PowerSurvivalThreshold));
     }
     clock.step_sim(2.0 * HOUR_S);
     note(
@@ -682,8 +709,15 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
         ..Replay::default()
     };
 
+    let mut blackbox = vec![0u8; encoded_capacity(16)];
+    let image_len = recorder
+        .encode(&mut blackbox)
+        .map_err(|_| ScenarioError("black-box image"))?;
+    blackbox.truncate(image_len);
+
     Ok(MarsRun {
         events,
+        blackbox,
         blackout_s,
         replan_ms,
         detour_arc_s: arc_s,
@@ -789,5 +823,25 @@ mod tests {
             t.heights.iter().any(|h| *h > 1.0),
             "the 25° ramp is present"
         );
+    }
+
+    #[test]
+    fn mars_blackbox_records_the_safe_mode_episode() {
+        let run = mars_sample().expect("flow runs");
+        let mut records = Vec::new();
+        tpt_t_space_core::blackbox::decode_each(&run.blackbox, |r| records.push(r))
+            .expect("the image decodes");
+        assert_eq!(records.len(), 4, "two approach moves, safe-mode entry and cause");
+        assert!(matches!(
+            records[2].event,
+            BoxEvent::Transition {
+                to: MissionState::SafeMode,
+                ..
+            }
+        ));
+        assert!(matches!(
+            records[3].event,
+            BoxEvent::SafeMode(SafeModeCause::PowerSurvivalThreshold)
+        ));
     }
 }
