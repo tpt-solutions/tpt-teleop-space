@@ -3114,6 +3114,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-t-space-dtn"
+version = "0.1.0"
+dependencies = [
+ "bytecheck",
+ "rkyv",
+ "tpt-t-space-core",
+]
+
+[[package]]
+name = "tpt-t-space-power"
+version = "0.1.0"
+dependencies = [
+ "tpt-t-space-core",
+]
+
+[[package]]
+name = "tpt-t-space-predictive"
+version = "0.1.0"
+dependencies = [
+ "tpt-t-space-core",
+]
+
+[[package]]
 name = "tpt-t-space-radiation"
 version = "0.1.0"
 dependencies = [
@@ -3125,7 +3148,18 @@ name = "tpt-t-space-sim"
 version = "0.1.0"
 dependencies = [
  "tpt-t-space-core",
+ "tpt-t-space-dtn",
+ "tpt-t-space-power",
+ "tpt-t-space-predictive",
  "tpt-t-space-radiation",
+ "tpt-t-space-thermal",
+]
+
+[[package]]
+name = "tpt-t-space-thermal"
+version = "0.1.0"
+dependencies = [
+ "tpt-t-space-core",
 ]
 
 [[package]]
