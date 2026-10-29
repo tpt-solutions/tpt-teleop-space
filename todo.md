@@ -348,7 +348,7 @@ bring-up → hardening/release.
       known at" timestamps and predicted-vs-confirmed state divergence
 - [x] Sequence linter/dry-run: validate an uplink sequence against rover
       limits and the DEM/hazard model on the ground before uplink
-- [ ] Safe Mode black-box recorder: ring-buffer of last N transitions and — ring, CRC image, NVRAM restore, `tpts blackbox`, and the Mars flow record into it; bus events and periodic saves from the running mission are not wired
+- [ ] Safe Mode black-box recorder: ring-buffer of last N transitions and — ring, CRC image, NVRAM restore, `tpts blackbox`; the Mars flow records transitions, Safe Mode and a bus event, and saves to NVRAM once at the end (not at each transition); the running mission's own bus is not wired
       bus events persisted to NVRAM, with `tpts` decoder for post-mortem
 - [ ] Live telemetry dashboard in the visualizer (connect to a running sim — not started
       or DTN downlink, not just replays)
