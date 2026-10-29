@@ -3106,6 +3106,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-t-domain-bridge"
+version = "1.0.0"
+dependencies = [
+ "bytecheck",
+ "rkyv",
+]
+
+[[package]]
 name = "tpt-t-space-core"
 version = "1.0.0"
 dependencies = [
@@ -3156,6 +3164,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-t-space-teleop"
+version = "1.0.0"
+dependencies = [
+ "tpt-t-domain-bridge",
+ "tpt-t-space-core",
+ "tpt-t-space-dtn",
+ "tpt-t-space-predictive",
+]
+
+[[package]]
 name = "tpt-t-space-thermal"
 version = "1.0.0"
 dependencies = [
@@ -3169,6 +3187,7 @@ dependencies = [
  "eframe",
  "tpt-t-space-core",
  "tpt-t-space-sim",
+ "tpt-t-space-teleop",
 ]
 
 [[package]]

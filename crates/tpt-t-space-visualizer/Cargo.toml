@@ -19,3 +19,4 @@ categories = ["aerospace::simulation", "gui"]
 eframe = "0.29"
 tpt-t-space-core = { path = "../tpt-t-space-core" }
 tpt-t-space-sim = { path = "../tpt-t-space-sim" }
+tpt-t-space-teleop = { path = "../tpt-t-space-teleop" }

@@ -6,7 +6,8 @@
 //! * **Attitude**: body rotated by the quaternion, sun vector in the body
 //!   frame, array-to-sun alignment,
 //! * **Terrain**: rover DEM with planned vs. actual path,
-//! * **Budgets**: power/battery/thermal traces with a playback cursor.
+//! * **Budgets**: power/battery/thermal traces with a playback cursor,
+//! * **Link**: light-time cues for a command on the Mars rover downlink.
 //!
 //! The top-bar slider scrubs the orbit/attitude/budget sample index.
 //!
@@ -19,8 +20,10 @@ use std::error::Error;
 use std::path::Path;
 
 use eframe::egui;
+use tpt_t_space_sim::profile;
 use tpt_t_space_sim::replay::{Replay, Terrain};
 use tpt_t_space_sim::scenario;
+use tpt_t_space_teleop::lighttime::{command_timing, cue_text};
 
 /// Load a replay from `path`, or the sim's demo replay when `path` is
 /// `None`.
@@ -46,6 +49,10 @@ pub struct ViewerApp {
     zoom: f32,
     /// Playback cursor into the orbit/attitude/budget samples.
     frame: usize,
+    /// Link pane: operator minute at which the command is sent.
+    send_min: f32,
+    /// Link pane: operator minute the readout is taken at.
+    now_min: f32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -54,6 +61,7 @@ enum Pane {
     Attitude,
     Terrain,
     Budgets,
+    Link,
 }
 
 impl ViewerApp {
@@ -66,6 +74,8 @@ impl ViewerApp {
             selected_pane: Pane::Orbit,
             zoom: 1.0,
             frame: 0,
+            send_min: 0.0,
+            now_min: 0.0,
         }
     }
 }
@@ -90,6 +100,7 @@ impl eframe::App for ViewerApp {
                     (Pane::Attitude, "Attitude"),
                     (Pane::Terrain, "Terrain"),
                     (Pane::Budgets, "Budgets"),
+                    (Pane::Link, "Link"),
                 ] {
                     if ui
                         .selectable_label(self.selected_pane == pane, label)
@@ -110,6 +121,7 @@ impl eframe::App for ViewerApp {
             Pane::Attitude => self.draw_attitude(ui),
             Pane::Terrain => self.draw_terrain(ui),
             Pane::Budgets => self.draw_budgets(ui),
+            Pane::Link => self.draw_link(ui),
         });
     }
 }
@@ -317,6 +329,30 @@ impl ViewerApp {
             egui::TextStyle::Small.resolve(ui.style()),
             egui::Color32::GRAY,
         );
+    }
+
+    /// Light-time cues for the Mars rover downlink: when a command sent at
+    /// `send_min` arrives and when its result is known, read at `now_min`.
+    fn draw_link(&mut self, ui: &mut egui::Ui) {
+        let profile = profile::mars_rover();
+        let one_way_us = (profile.link.one_way_delay_s * 1e6) as u64;
+        let send_us = (f64::from(self.send_min) * 60e6) as u64;
+        let now_us = (f64::from(self.now_min) * 60e6) as u64;
+        let timing = command_timing(send_us, one_way_us);
+        ui.heading(profile.summary);
+        ui.label(format!(
+            "one-way light time {:.0} s; the operator clock is in minutes",
+            profile.link.one_way_delay_s
+        ));
+        ui.add(egui::Slider::new(&mut self.send_min, 0.0..=240.0).text("command sent at (min)"));
+        ui.add(egui::Slider::new(&mut self.now_min, 0.0..=240.0).text("readout at (min)"));
+        ui.separator();
+        ui.monospace(format!(
+            "arrives at  {:>8.2} min\nknown at    {:>8.2} min",
+            timing.arrives_us as f64 / 60e6,
+            timing.result_known_us as f64 / 60e6,
+        ));
+        ui.label(cue_text(&timing, now_us));
     }
 
     fn draw_budgets(&mut self, ui: &mut egui::Ui) {
