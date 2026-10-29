@@ -241,7 +241,12 @@ mod tests {
         Replay {
             orbit: vec![[7.0e6, -1.25, 0.5], [6.9e6, 3.0, -0.1]],
             attitude: vec![Attitude {
-                q: [0.707_107, 0.0, 0.707_107, 0.0],
+                q: [
+                    core::f32::consts::FRAC_1_SQRT_2,
+                    0.0,
+                    core::f32::consts::FRAC_1_SQRT_2,
+                    0.0,
+                ],
                 sun_body: [0.0, 0.6, 0.8],
             }],
             budgets: vec![Budget {
