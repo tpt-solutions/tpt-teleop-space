@@ -23,6 +23,9 @@ the workspace into one binary that works the same on Windows, macOS and Linux.
   `capture ID`, separated by `;` or `,`.
 - `tpts campaign seu|blackout [--seeds N]`: a seeded fault-injection sweep
   against the TMR voter (SEU rate) or the DTN store (blackout length).
+- `tpts campaign run FILE`: the same sweeps, declared in a scenario file
+  (`seeds`, `votes`, `seu-rates`, `blackout-hours`, `bundle-every-s`), so a
+  shared file reproduces the numbers.
 - `tpts blackbox <hex|file>`: decode a Safe Mode black-box image.
 - `tpts new <rover|satellite|orbital> [--name NAME]`: scaffold a mission crate
   under `crates/`, wired to the core Safe Mode controller and the DTN agent,

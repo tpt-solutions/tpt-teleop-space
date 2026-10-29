@@ -15,6 +15,9 @@ and this crate adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.h
   and dry run over the Mars terrain), `campaign` (SEU-rate and blackout-length
   sweeps), and `blackbox` (Safe Mode black-box decoder). `ccsds` now decodes
   payload fields through the packet-definition table.
+- `campaign run FILE`: fault sweeps declared in a line-based scenario file,
+  with errors that name the line. `scenario mars --blackbox FILE` writes the
+  recorded Safe Mode image.
 - On Windows, the audit scripts run under Git Bash, located by absolute path
   (`TPT_BASH` overrides it). A bare `bash` resolves to the WSL launcher in
   `System32`, which can block.
