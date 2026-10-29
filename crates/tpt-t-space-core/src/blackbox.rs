@@ -197,6 +197,33 @@ impl<const N: usize> BlackBox<N> {
     }
 }
 
+/// The length of the image that starts at the front of an NVRAM region, read
+/// from its header. The region may be larger: encoding writes only the image,
+/// and whatever follows it is left alone.
+///
+/// Returns `None` when the region does not start with a black-box header or
+/// the image does not fit inside it.
+#[must_use]
+pub fn image_len(nvram: &[u8]) -> Option<usize> {
+    if nvram.len() < HEADER || nvram[0] != MAGIC {
+        return None;
+    }
+    let count = usize::from(u16::from_le_bytes([nvram[2], nvram[3]]));
+    let len = encoded_capacity(count);
+    (len <= nvram.len()).then_some(len)
+}
+
+/// Decode the image at the front of an NVRAM region, as [`decode_each`] does
+/// for an exact-length slice, so a box can be restored after a reset.
+///
+/// # Errors
+/// [`DecodeError::Short`] when the region holds no complete image; otherwise
+/// the errors of [`decode_each`].
+pub fn restore_each(nvram: &[u8], visit: impl FnMut(Record)) -> Result<usize, DecodeError> {
+    let len = image_len(nvram).ok_or(DecodeError::Short)?;
+    decode_each(&nvram[..len], visit)
+}
+
 /// Decode an image written by [`BlackBox::encode`], calling `visit` for each
 /// record, oldest first, and returning the record count. Allocation-free.
 ///
@@ -416,6 +443,34 @@ mod tests {
         let crc = crc32(0, &buf[..body]);
         buf[body..].copy_from_slice(&crc.to_le_bytes());
         assert_eq!(decode_all(&buf), Err(DecodeError::BadRecord { index: 0 }));
+    }
+
+    #[test]
+    fn image_is_restored_from_a_larger_nvram_region() {
+        let bb = sample();
+        // An NVRAM region holding the image followed by unrelated data.
+        let mut nvram = [0xEEu8; 512];
+        let n = bb.encode(&mut nvram).expect("fits");
+        assert_eq!(image_len(&nvram), Some(n));
+        let mut restored = Vec::new();
+        restore_each(&nvram, |r| restored.push(r)).expect("restores");
+        let expected: Vec<Record> = bb.iter().collect();
+        assert_eq!(restored, expected);
+        assert!(
+            nvram[n..].iter().all(|b| *b == 0xEE),
+            "bytes past the image are untouched"
+        );
+    }
+
+    #[test]
+    fn a_blank_or_truncated_region_restores_nothing() {
+        assert_eq!(image_len(&[0xFF; 64]), None);
+        let mut nvram = [0u8; 64];
+        let n = sample().encode(&mut nvram).expect("fits");
+        assert_eq!(
+            restore_each(&nvram[..n - 1], |_| {}),
+            Err(DecodeError::Short)
+        );
     }
 
     #[test]
