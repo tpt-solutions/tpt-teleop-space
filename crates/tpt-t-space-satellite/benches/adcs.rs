@@ -3,9 +3,9 @@
 //! with `std::time::Instant`.
 //!
 //! ```sh
-//! cargo bench --manifest-path crates/tpt-t-space-satellite/Cargo.toml
+//! cd crates/tpt-t-space-satellite && cargo bench
 //! # enforce the spec gate (exit 1 on miss):
-//! TPT_ADCS_STRICT=1 cargo bench --manifest-path crates/tpt-t-space-satellite/Cargo.toml
+//! cd crates/tpt-t-space-satellite && TPT_ADCS_STRICT=1 cargo bench
 //! ```
 
 use std::time::Instant;

@@ -35,10 +35,13 @@ jobs:
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
+      # Run from the crate dir so rustup picks up its crate-local nightly pin.
       - name: rustfmt (${{ matrix.crate }})
-        run: cargo fmt --manifest-path crates/${{ matrix.crate }}/Cargo.toml -- --check
+        working-directory: crates/${{ matrix.crate }}
+        run: cargo fmt -- --check
       - name: clippy (${{ matrix.crate }})
-        run: cargo clippy --manifest-path crates/${{ matrix.crate }}/Cargo.toml --all-targets -- -D warnings
+        working-directory: crates/${{ matrix.crate }}
+        run: cargo clippy --all-targets -- -D warnings
 
   audits:
     # Zero-lock (hard gate) + allocation report (informational) +

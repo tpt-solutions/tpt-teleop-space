@@ -4,6 +4,8 @@
 //! fails the bench. Benches run from the crate directory: rustup picks the
 //! toolchain from the working directory, so `--manifest-path` from the repo
 //! root would ignore the satellite crate's nightly `rust-toolchain.toml`.
+//! `RUSTUP_TOOLCHAIN` is also cleared, since `cargo run` sets it and it would
+//! override that file.
 
 use std::process::{Command, ExitCode};
 
@@ -44,6 +46,9 @@ pub fn run() -> CliResult {
     for b in &BUDGETS {
         let out = Command::new("cargo")
             .arg("bench")
+            // `cargo run` exports RUSTUP_TOOLCHAIN, which would override the
+            // crate-local `rust-toolchain.toml` pin; clear it for the child.
+            .env_remove("RUSTUP_TOOLCHAIN")
             .env(b.strict_env, "1")
             .current_dir(root.join(b.dir))
             .output()
