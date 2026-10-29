@@ -1,0 +1,24 @@
+[package]
+name = "tpt-t-space-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme = "README.md"
+description = "tpts: adoption CLI for tpt-teleop-space — toolchain doctor, audits, strict budgets, CCSDS decode, replay generation, and mission-crate scaffolding"
+
+[[bin]]
+name = "tpts"
+path = "src/main.rs"
+
+[dependencies]
+tpt-t-space-ccsds = { workspace = true }
+tpt-t-space-core = { workspace = true }
+tpt-t-space-predictive = { workspace = true }
+tpt-t-space-teleop = { workspace = true }
+tpt-t-space-sim = { workspace = true }
+
+[lints]
+workspace = true

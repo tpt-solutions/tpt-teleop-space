@@ -266,7 +266,7 @@ checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
 
 [[package]]
 name = "tpt-t-domain-bridge"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "bytecheck",
  "rkyv",
@@ -274,11 +274,22 @@ dependencies = [
 
 [[package]]
 name = "tpt-t-space-ccsds"
-version = "0.1.0"
+version = "1.0.0"
+
+[[package]]
+name = "tpt-t-space-cli"
+version = "1.0.0"
+dependencies = [
+ "tpt-t-space-ccsds",
+ "tpt-t-space-core",
+ "tpt-t-space-predictive",
+ "tpt-t-space-sim",
+ "tpt-t-space-teleop",
+]
 
 [[package]]
 name = "tpt-t-space-core"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "bytecheck",
  "rkyv",
@@ -286,7 +297,7 @@ dependencies = [
 
 [[package]]
 name = "tpt-t-space-dtn"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "bytecheck",
  "rkyv",
@@ -295,11 +306,11 @@ dependencies = [
 
 [[package]]
 name = "tpt-t-space-edge"
-version = "0.1.0"
+version = "1.0.0"
 
 [[package]]
 name = "tpt-t-space-orbital"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "tpt-t-space-core",
  "tpt-t-space-predictive",
@@ -307,28 +318,28 @@ dependencies = [
 
 [[package]]
 name = "tpt-t-space-power"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "tpt-t-space-core",
 ]
 
 [[package]]
 name = "tpt-t-space-predictive"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "tpt-t-space-core",
 ]
 
 [[package]]
 name = "tpt-t-space-radiation"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "tpt-t-space-core",
 ]
 
 [[package]]
 name = "tpt-t-space-sim"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "tpt-t-space-core",
  "tpt-t-space-dtn",
@@ -340,7 +351,7 @@ dependencies = [
 
 [[package]]
 name = "tpt-t-space-teleop"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "tpt-t-domain-bridge",
  "tpt-t-space-core",
@@ -350,7 +361,7 @@ dependencies = [
 
 [[package]]
 name = "tpt-t-space-thermal"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "tpt-t-space-core",
 ]
