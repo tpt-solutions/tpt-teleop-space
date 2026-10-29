@@ -166,6 +166,7 @@ mod tests {
         assert_eq!(tc.command, &[1, 2, 3]);
     }
 
+    // REQ: CCS-002
     #[test]
     fn corrupted_command_is_rejected_by_crc() {
         let mut buf = tc_packet(&[1, 2, 3, 4], true);
@@ -218,6 +219,7 @@ mod tests {
         assert_eq!(TcPacket::parse(&buf, true), Err(TcError::CrcMissing));
     }
 
+    // REQ: CCS-001
     #[test]
     fn truncated_packet_is_rejected_not_panicked() {
         let buf = tc_packet(&[9, 9, 9, 9, 9, 9], true);

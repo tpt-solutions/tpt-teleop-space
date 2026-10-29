@@ -19,6 +19,7 @@
 //! * [`tc`] — TC packets (CCSDS 232.0-B-3) with optional CRC-16 error
 //!   control validation.
 
+pub mod defs;
 pub mod packet;
 pub mod tc;
 pub mod tm;

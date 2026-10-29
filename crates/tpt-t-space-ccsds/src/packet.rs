@@ -266,6 +266,7 @@ mod tests {
         assert_eq!(v.payload().len(), 1);
     }
 
+    // REQ: CCS-001
     #[test]
     fn too_short_buffers_rejected() {
         let (_, packet) = header_for(4);
