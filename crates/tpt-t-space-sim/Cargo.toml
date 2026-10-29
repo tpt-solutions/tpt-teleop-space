@@ -6,15 +6,15 @@ rust-version.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "Headless space simulator: 6DOF orbital mechanics (J2, drag, third body), reaction wheel dynamics, sensor noise models, radiation bit-flip injection, DTN blackout/light-time profiles, variable-speed clock"
+description = "Headless space simulator: 6DOF orbital mechanics (J2, drag, third body), reaction wheel dynamics, sensor noise models, radiation bit-flip injection, DTN blackout/light-time profiles, variable-speed clock, replay files, and the canned LEO and Mars scenarios"
 
 [dependencies]
 tpt-t-space-core = { workspace = true }
 tpt-t-space-radiation = { workspace = true }
-
-[dev-dependencies]
-tpt-t-space-dtn = { workspace = true }
+tpt-t-space-power = { workspace = true }
+tpt-t-space-thermal = { workspace = true }
 tpt-t-space-predictive = { workspace = true }
+tpt-t-space-dtn = { workspace = true }
 
 [lints]
 workspace = true

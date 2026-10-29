@@ -332,8 +332,10 @@ version = "0.1.0"
 dependencies = [
  "tpt-t-space-core",
  "tpt-t-space-dtn",
+ "tpt-t-space-power",
  "tpt-t-space-predictive",
  "tpt-t-space-radiation",
+ "tpt-t-space-thermal",
 ]
 
 [[package]]

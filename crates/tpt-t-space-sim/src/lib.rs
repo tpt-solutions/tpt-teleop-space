@@ -18,7 +18,10 @@
 //! * [`dtn_link`] — DTN network blackout and delay profiles (Mars–Earth
 //!   light time, occultation windows);
 //! * [`clock`] — the variable-speed simulation clock: multi-year cruise
-//!   phases or complex rendezvous in minutes of wall time.
+//!   phases or complex rendezvous in minutes of wall time;
+//! * [`replay`] — the shared replay file format (CSV) for the visualizer
+//!   and the `tpts` CLI;
+//! * [`scenario`] — the canned LEO survey and the spec §6 Mars flow.
 //!
 //! Everything is deterministic: one seed drives the whole sim, so a
 //! failing scenario reproduces exactly.
@@ -27,5 +30,7 @@ pub mod clock;
 pub mod dtn_link;
 pub mod orbit;
 pub mod radiation_env;
+pub mod replay;
+pub mod scenario;
 pub mod sensors;
 pub mod wheels;
