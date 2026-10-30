@@ -341,6 +341,7 @@ dependencies = [
 name = "tpt-t-space-sim"
 version = "1.0.0"
 dependencies = [
+ "rkyv",
  "tpt-t-space-core",
  "tpt-t-space-dtn",
  "tpt-t-space-power",

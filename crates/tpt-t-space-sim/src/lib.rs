@@ -29,6 +29,7 @@
 //! failing scenario reproduces exactly.
 
 pub mod campaign;
+pub mod checkpoint;
 pub mod clock;
 pub mod dtn_link;
 pub mod orbit;
@@ -36,5 +37,6 @@ pub mod profile;
 pub mod radiation_env;
 pub mod replay;
 pub mod scenario;
+pub mod script;
 pub mod sensors;
 pub mod wheels;

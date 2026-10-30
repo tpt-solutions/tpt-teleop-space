@@ -8,6 +8,13 @@ and this crate adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ## [Unreleased]
 
 ### Added
+- Phase 20: `script` module, timeline scenario files (link geometry, blackouts,
+  SEU upsets, telemetry, Safe Mode, drain) replayed deterministically against
+  the DTN store, TMR voter and black box.
+- Phase 20: `checkpoint` module, mission-context checkpoints of the Mars flow,
+  stored in the core snapshot format so a viewer can rewind to any of them.
+- Phase 20: the Mars flow's black box is fed through the mission bus, and its
+  NVRAM image is rewritten at every entry rather than once at the end.
 - Phase 18: `replay` module, the CSV replay format shared by the sim, the
   `tpts` CLI, and the visualizer. Exact round-trip; line-numbered errors.
 - Phase 18: `scenario` module with the canned LEO survey (J2/drag orbit,

@@ -12,7 +12,8 @@
 
 use std::time::Instant;
 
-use tpt_t_space_core::blackbox::{BlackBox, Event as BoxEvent, restore_each};
+use tpt_t_space_core::blackbox::{BlackBox, Event as BoxEvent, image_len, restore_each};
+use tpt_t_space_core::bus::Bus;
 use tpt_t_space_core::wire::SpaceEvent;
 
 /// Bus kind code the Mars flow records when the uplink gains custody.
@@ -30,6 +31,7 @@ use tpt_t_space_radiation::seu::{SeuBook, SeuKind};
 use tpt_t_space_radiation::tmr::TmrVoter;
 use tpt_t_space_thermal::ThermalSubsystem;
 
+use crate::checkpoint::{Checkpoint, Checkpointer};
 use crate::clock::SimClock;
 use crate::dtn_link::LinkProfile;
 use crate::orbit::{Orbit, Perturbations, R_EARTH, Spacecraft};
@@ -66,6 +68,21 @@ pub struct Event {
     pub phase: &'static str,
     /// What happened.
     pub detail: String,
+}
+
+/// Append one entry to the black box and rewrite its NVRAM image, so a
+/// processor reset loses nothing already recorded.
+fn log(
+    recorder: &mut BlackBox<16>,
+    nvram: &mut [u8],
+    t_s: u32,
+    event: BoxEvent,
+) -> Result<(), ScenarioError> {
+    recorder.record(t_s, event);
+    recorder
+        .encode(nvram)
+        .map(|_| ())
+        .map_err(|_| ScenarioError("black-box persist"))
 }
 
 fn note(events: &mut Vec<Event>, t_s: f64, phase: &'static str, detail: impl Into<String>) {
@@ -388,7 +405,17 @@ pub struct MarsRun {
     pub blackbox_restored: usize,
     /// The rover's pose trace as a replay (terrain + planned/actual paths).
     pub replay: Replay,
+    /// Mission-context checkpoints, in timeline order, for rewinding the run.
+    pub checkpoints: Vec<Checkpoint>,
+    /// Sim time the autonomous traverse began, seconds.
+    pub traverse_start_s: f64,
+    /// Rover ground pose during the traverse, metres, one sample per
+    /// [`TRAVERSE_STEP_S`] starting at `traverse_start_s`.
+    pub track_m: Vec<[f32; 2]>,
 }
+
+/// Spacing of [`MarsRun::track_m`] samples, seconds (the 10 Hz control loop).
+pub const TRAVERSE_STEP_S: f64 = 0.1;
 
 /// Run the spec §6 Mars Sample Collection flow.
 ///
@@ -402,6 +429,10 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
     let link = LinkProfile::mars_surface();
     let mut mission = StateMachine::new(MissionState::Cruise);
     let mut recorder = BlackBox::<16>::new();
+    let mut nvram = [0xFFu8; NVRAM_BYTES];
+    let mut checkpoints = Checkpointer::new();
+    // The mission bus: kind-coded events reach the box through it.
+    let bus = Bus::<SpaceEvent, 1, 4>::new();
     let mut events = Vec::new();
 
     // 1. The command: Earth uplinks "Proceed to Waypoint Alpha and collect
@@ -443,35 +474,44 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
         "uplink",
         "command accepted under DTN custody",
     );
-    recorder.record_bus(
-        0,
-        &SpaceEvent {
+    bus.producer(0)
+        .try_push(SpaceEvent {
             kind: BUS_UPLINK_CUSTODY,
             seq: 1,
             timestamp_us: 0,
             payload: 0,
-        },
-    );
+        })
+        .map_err(|_| ScenarioError("mission bus full"))?;
+    while let Some((_, event)) = bus.try_pop_any() {
+        log(&mut recorder, &mut nvram, 0, BoxEvent::Bus(event.kind))?;
+    }
     mission
         .transition(MissionState::Approach)
         .map_err(|_| ScenarioError("cruise to approach"))?;
-    recorder.record(
+    log(
+        &mut recorder,
+        &mut nvram,
         0,
         BoxEvent::Transition {
             from: MissionState::Cruise,
             to: MissionState::Approach,
         },
-    );
+    )?;
     mission
         .transition(MissionState::Operations)
         .map_err(|_| ScenarioError("approach to operations"))?;
-    recorder.record(
+    log(
+        &mut recorder,
+        &mut nvram,
         0,
         BoxEvent::Transition {
             from: MissionState::Approach,
             to: MissionState::Operations,
         },
-    );
+    )?;
+    checkpoints
+        .capture("uplink", 0.0, mission.state(), false, 0)
+        .map_err(|_| ScenarioError("checkpoint"))?;
 
     // 2. The blackout: Mars rotates; the rover is alone for hours.
     let mut blackout_s = 0.0;
@@ -485,6 +525,9 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
         "blackout",
         format!("link down for {:.2} h", blackout_s / HOUR_S),
     );
+    checkpoints
+        .capture("blackout", clock.sim_s(), mission.state(), false, 0)
+        .map_err(|_| ScenarioError("checkpoint"))?;
 
     // Telemetry generated during the blackout queues in NVRAM.
     let mut t_log = TelemetryLog::<64>::new();
@@ -537,7 +580,7 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
     );
 
     // Predicted (planned) arc at the detour curvature, for the terrain pane.
-    let dt = 0.1_f32;
+    let dt = TRAVERSE_STEP_S as f32;
     let step_m = speed * dt;
     let mut planned_pose = pose;
     let mut planned = Vec::new();
@@ -552,6 +595,8 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
     }
 
     let mut actual = vec![cell_of(pose.x_m, pose.y_m, cfg.cell_m)];
+    let traverse_start_s = clock.sim_s();
+    let mut track_m = vec![[pose.x_m, pose.y_m]];
     let mut arc_s = 0.0_f64;
     let mut max_clearance_m = 0.0_f32;
     let mut hazard_entered = false;
@@ -574,6 +619,7 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
             break;
         }
         actual.push(cell_of(pose.x_m, pose.y_m, cfg.cell_m));
+        track_m.push([pose.x_m, pose.y_m]);
         max_clearance_m = max_clearance_m.max(pose.y_m.abs());
         arc_s += f64::from(dt);
         clock.step_sim(f64::from(dt));
@@ -584,6 +630,9 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
         "traverse",
         format!("cleared hazard band; max lateral {max_clearance_m:.1} m"),
     );
+    checkpoints
+        .capture("traverse", clock.sim_s(), mission.state(), false, 0)
+        .map_err(|_| ScenarioError("checkpoint"))?;
 
     // 5. The anomaly: a cosmic ray flips a bit mid-calculation; the TMR
     //    voter masks the corrupted core and flags it.
@@ -609,6 +658,9 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
             vote.masked_core
         ),
     );
+    checkpoints
+        .capture("radiation", clock.sim_s(), mission.state(), false, 0)
+        .map_err(|_| ScenarioError("checkpoint"))?;
 
     // 6. Sample collection at Waypoint Alpha: the science chain.
     const CHAIN: [&str; 5] = [
@@ -638,6 +690,10 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
         );
     }
 
+    checkpoints
+        .capture("science", clock.sim_s(), mission.state(), false, 0)
+        .map_err(|_| ScenarioError("checkpoint"))?;
+
     // 7. Safe Mode: a dust storm drops the solar output.
     let mut controller = SafeModeController::new();
     let mut platform = RoverPlatform::default();
@@ -651,17 +707,21 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
             .transition(MissionState::SafeMode)
             .map_err(|_| ScenarioError("operations to safe mode"))?;
         let now = clock.sim_s() as u32;
-        recorder.record(
+        log(
+            &mut recorder,
+            &mut nvram,
             now,
             BoxEvent::Transition {
                 from: MissionState::Operations,
                 to: MissionState::SafeMode,
             },
-        );
-        recorder.record(
+        )?;
+        log(
+            &mut recorder,
+            &mut nvram,
             now,
             BoxEvent::SafeMode(SafeModeCause::PowerSurvivalThreshold),
-        );
+        )?;
     }
     clock.step_sim(2.0 * HOUR_S);
     note(
@@ -670,6 +730,15 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
         "safe-mode",
         "payload off, rover halted, low-rate beacon on",
     );
+    checkpoints
+        .capture(
+            "safe-mode",
+            clock.sim_s(),
+            mission.state(),
+            safe_mode_entered,
+            0,
+        )
+        .map_err(|_| ScenarioError("checkpoint"))?;
 
     // 8. Reconnection: the storm clears, the orbiter returns; DTN resumes
     //    and the telemetry log + Safe Mode alert go downlink.
@@ -715,6 +784,15 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
         "reconnect",
         format!("{delivered_bundles} bundles in {flits} flits drained"),
     );
+    checkpoints
+        .capture(
+            "reconnect",
+            clock.sim_s(),
+            mission.state(),
+            safe_mode_entered,
+            delivered_bundles,
+        )
+        .map_err(|_| ScenarioError("checkpoint"))?;
 
     let replay = Replay {
         terrain: Terrain {
@@ -729,15 +807,12 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
         ..Replay::default()
     };
 
-    // Persist the box to an NVRAM region, then restore it, as after a reset.
-    let mut nvram = [0xFFu8; NVRAM_BYTES];
-    let image_len = recorder
-        .encode(&mut nvram)
-        .map_err(|_| ScenarioError("black-box image"))?;
+    // The NVRAM image was rewritten at every entry; restore it, as after a reset.
+    let len = image_len(&nvram).ok_or(ScenarioError("black-box image"))?;
     let mut blackbox_restored = 0usize;
     restore_each(&nvram, |_| blackbox_restored += 1)
         .map_err(|_| ScenarioError("black-box restore"))?;
-    let blackbox = nvram[..image_len].to_vec();
+    let blackbox = nvram[..len].to_vec();
 
     Ok(MarsRun {
         events,
@@ -763,6 +838,9 @@ pub fn mars_sample() -> Result<MarsRun, ScenarioError> {
         telemetry_chunks: t_log.total_chunks(),
         sim_days: clock.sim_days(),
         replay,
+        checkpoints: checkpoints.into_checkpoints(),
+        traverse_start_s,
+        track_m,
     })
 }
 
@@ -877,5 +955,59 @@ mod tests {
             records[4].event,
             BoxEvent::SafeMode(SafeModeCause::PowerSurvivalThreshold)
         ));
+    }
+
+    #[test]
+    fn mars_checkpoints_follow_the_timeline_and_rewind_to_the_run_state() {
+        let run = mars_sample().expect("flow runs");
+        let labels: Vec<&str> = run.checkpoints.iter().map(|c| c.label).collect();
+        assert_eq!(
+            labels,
+            [
+                "uplink",
+                "blackout",
+                "traverse",
+                "radiation",
+                "science",
+                "safe-mode",
+                "reconnect"
+            ]
+        );
+        let ctx: Vec<_> = run
+            .checkpoints
+            .iter()
+            .map(|c| c.restore().expect("every image is valid"))
+            .collect();
+        assert!(ctx.windows(2).all(|w| w[0].t_s <= w[1].t_s));
+        assert!(!ctx[0].safe_mode, "safe mode comes later");
+        let last = ctx.last().expect("checkpoints taken");
+        assert!(last.safe_mode);
+        assert_eq!(last.bundles_delivered, run.delivered_bundles);
+    }
+
+    #[test]
+    fn the_track_matches_the_recorded_path_sample_for_sample() {
+        let run = mars_sample().expect("flow runs");
+        assert_eq!(run.track_m.len(), run.replay.terrain.actual.len());
+        assert!(
+            run.traverse_start_s > 0.0,
+            "the traverse follows the blackout"
+        );
+    }
+
+    #[test]
+    fn every_entry_is_persisted_as_it_is_logged() {
+        let mut recorder = BlackBox::<16>::new();
+        let mut nvram = [0xFFu8; NVRAM_BYTES];
+        log(
+            &mut recorder,
+            &mut nvram,
+            7,
+            BoxEvent::Bus(BUS_UPLINK_CUSTODY),
+        )
+        .expect("logs");
+        let mut restored = 0usize;
+        restore_each(&nvram, |_| restored += 1).expect("restores");
+        assert_eq!(restored, 1, "the first entry is on NVRAM before any reset");
     }
 }
