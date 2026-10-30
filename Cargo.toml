@@ -46,6 +46,7 @@ tpt-t-space-orbital = { path = "crates/tpt-t-space-orbital" }
 tpt-t-space-edge = { path = "crates/tpt-t-space-edge" }
 tpt-t-space-teleop = { path = "crates/tpt-t-space-teleop" }
 tpt-t-space-sim = { path = "crates/tpt-t-space-sim" }
+tpt-t-space-hil = { path = "crates/tpt-t-space-hil" }
 # Excluded crates are referenced by path from dependents that need their
 # types at compile time of this workspace (none today: satellite/rover are
 # leaf producers consumed via the core wire prelude).

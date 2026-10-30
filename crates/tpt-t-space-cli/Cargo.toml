@@ -16,6 +16,7 @@ path = "src/main.rs"
 [dependencies]
 tpt-t-space-ccsds = { workspace = true }
 tpt-t-space-core = { workspace = true }
+tpt-t-space-hil = { workspace = true }
 tpt-t-space-predictive = { workspace = true }
 tpt-t-space-teleop = { workspace = true }
 tpt-t-space-sim = { workspace = true }

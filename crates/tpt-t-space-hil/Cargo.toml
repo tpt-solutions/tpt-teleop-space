@@ -1,0 +1,21 @@
+[package]
+name = "tpt-t-space-hil"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Simulated Phase 16 bring-up rig: board memory and register checks, watchdog feed loop, scrubber radiation campaign, sensor timing, light-time DTN link, target headroom, and thermal cycling. Simulation evidence only; the hardware items stay open"
+
+[dependencies]
+tpt-t-space-core = { workspace = true }
+tpt-t-space-dtn = { workspace = true }
+tpt-t-space-edge = { workspace = true }
+tpt-t-space-predictive = { workspace = true }
+tpt-t-space-radiation = { workspace = true }
+tpt-t-space-sim = { workspace = true }
+tpt-t-space-thermal = { workspace = true }
+
+[lints]
+workspace = true

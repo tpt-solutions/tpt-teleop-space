@@ -11,6 +11,7 @@ mod budgets;
 mod campaign_cmd;
 mod ccsds;
 mod doctor;
+mod hil_cmd;
 mod new;
 mod seq;
 mod sim_cmds;
@@ -43,6 +44,9 @@ COMMANDS:
     campaign run FILE                       the same sweep, with its parameters in a file
     seq <steps>                             lint an uplink sequence and dry-run it
                                             over the Mars terrain, e.g. 'drive 1; turn 90'
+    hil                                     run the simulated Phase 16 bring-up rig
+                                            (board, watchdog, radiation, timing, link,
+                                            headroom, thermal): simulation only
     new <rover|satellite|orbital> [--name N] scaffold a mission crate wired to core
                                             Safe Mode and DTN, with a smoke test
     help                                    print this message
@@ -66,6 +70,7 @@ fn main() -> ExitCode {
         Some("campaign") => campaign_cmd::run(rest),
         Some("scenario") => sim_cmds::scenario(rest),
         Some("new") => new::run(rest),
+        Some("hil") => hil_cmd::run(rest),
         None | Some("help" | "--help" | "-h") => {
             print!("{USAGE}");
             Ok(ExitCode::SUCCESS)
