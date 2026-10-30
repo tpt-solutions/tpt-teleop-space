@@ -7,7 +7,12 @@
 //!   frame, array-to-sun alignment,
 //! * **Terrain**: rover DEM with planned vs. actual path,
 //! * **Budgets**: power/battery/thermal traces with a playback cursor,
-//! * **Link**: light-time cues for a command on the Mars rover downlink.
+//! * **Link**: light-time cues for a command on the Mars rover downlink,
+//!   and the predicted-vs-confirmed rover position when the Mars flow is
+//!   loaded.
+//! * **Downlink**: CCSDS telemetry decoded through the packet-definition
+//!   table; follows a capture file as it grows (`--ccsds FILE`).
+//! * **Rewind**: the Mars flow's mission checkpoints, rewound to any step.
 //!
 //! The top-bar slider scrubs the orbit/attitude/budget sample index.
 //!
@@ -16,14 +21,24 @@
 
 #![warn(missing_docs)]
 
+pub mod telemetry;
+
 use std::error::Error;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 use eframe::egui;
+use tpt_t_space_sim::checkpoint::Checkpoint;
 use tpt_t_space_sim::profile;
 use tpt_t_space_sim::replay::{Replay, Terrain};
-use tpt_t_space_sim::scenario;
-use tpt_t_space_teleop::lighttime::{command_timing, cue_text};
+use tpt_t_space_sim::scenario::{self, Event, MarsRun, TRAVERSE_STEP_S};
+use tpt_t_space_teleop::display::PredictiveDisplay;
+use tpt_t_space_teleop::lighttime::{command_timing, cue_text, divergence};
+
+use telemetry::Downlink;
+
+/// How often a followed downlink capture is checked for growth.
+const FOLLOW_EVERY: Duration = Duration::from_secs(1);
 
 /// Load a replay from `path`, or the sim's demo replay when `path` is
 /// `None`.
@@ -41,6 +56,99 @@ pub fn load_replay(path: Option<&Path>) -> Result<Replay, Box<dyn Error>> {
     }
 }
 
+/// What the viewer loads: the replay to draw and, for the demo, the Mars
+/// flow behind its terrain.
+pub struct Loaded {
+    /// The replay to draw.
+    pub replay: Replay,
+    /// The Mars flow, present only for the demo (a file carries no run).
+    pub mars: Option<MarsView>,
+}
+
+/// Load a replay file, or the demo: the LEO survey with the Mars flow's
+/// terrain, and the Mars flow itself for the Rewind and Link panes.
+///
+/// # Errors
+/// Returns an error if the file cannot be read or does not parse, or if
+/// the demo scenario fails.
+pub fn load(path: Option<&Path>) -> Result<Loaded, Box<dyn Error>> {
+    if path.is_some() {
+        return Ok(Loaded {
+            replay: load_replay(path)?,
+            mars: None,
+        });
+    }
+    let (mut replay, _) = scenario::leo_survey(2, 30.0);
+    let mut run = scenario::mars_sample()?;
+    replay.terrain = std::mem::take(&mut run.replay.terrain);
+    Ok(Loaded {
+        replay,
+        mars: Some(MarsView::from_run(run)),
+    })
+}
+
+/// The Mars flow as the viewer uses it: checkpoints to rewind, the timeline,
+/// and the rover's ground track for the light-time readout.
+pub struct MarsView {
+    checkpoints: Vec<Checkpoint>,
+    events: Vec<Event>,
+    traverse_start_s: f64,
+    track_m: Vec<[f32; 2]>,
+}
+
+impl MarsView {
+    fn from_run(run: MarsRun) -> Self {
+        Self {
+            checkpoints: run.checkpoints,
+            events: run.events,
+            traverse_start_s: run.traverse_start_s,
+            track_m: run.track_m,
+        }
+    }
+
+    /// The rover's ground position at sim time `t_s`, metres, as `[x, y, 0]`.
+    /// Before the traverse, and after its last sample, the rover is where
+    /// it was last seen.
+    fn pose_at(&self, t_s: f64) -> [f64; 3] {
+        let k = ((t_s - self.traverse_start_s) / TRAVERSE_STEP_S).floor();
+        let last = self.track_m.len().saturating_sub(1);
+        let i = (k.max(0.0) as usize).min(last);
+        let [x, y] = self.track_m.get(i).copied().unwrap_or([0.0, 0.0]);
+        [f64::from(x), f64::from(y), 0.0]
+    }
+}
+
+/// Command-line options: an optional replay, and an optional downlink
+/// capture to follow.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct Options {
+    /// The replay file, or `None` for the demo.
+    pub replay: Option<PathBuf>,
+    /// A CCSDS capture to follow as it grows.
+    pub downlink: Option<PathBuf>,
+}
+
+/// Parse `[REPLAY] [--ccsds FILE]`.
+///
+/// # Errors
+/// Returns a message for an unknown option, a missing `--ccsds` value, or a
+/// second replay file.
+pub fn parse_args(args: impl IntoIterator<Item = String>) -> Result<Options, String> {
+    let mut opts = Options::default();
+    let mut args = args.into_iter();
+    while let Some(arg) = args.next() {
+        if arg == "--ccsds" {
+            let file = args.next().ok_or("--ccsds needs a file")?;
+            opts.downlink = Some(PathBuf::from(file));
+        } else if arg.starts_with("--") {
+            return Err(format!("unknown option `{arg}`"));
+        } else if opts.replay.replace(PathBuf::from(arg)).is_some() {
+            return Err("only one replay file may be given".to_owned());
+        }
+    }
+    Ok(opts)
+}
+
 /// The viewer application.
 pub struct ViewerApp {
     replay: Replay,
@@ -53,6 +161,14 @@ pub struct ViewerApp {
     send_min: f32,
     /// Link pane: operator minute the readout is taken at.
     now_min: f32,
+    /// Downlink capture being followed, if any.
+    downlink_path: Option<PathBuf>,
+    /// Length of the capture when it was last decoded, to notice growth.
+    downlink_len: u64,
+    downlink: Downlink,
+    mars: Option<MarsView>,
+    /// Checkpoint the Rewind pane shows.
+    rewind: usize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -62,6 +178,8 @@ enum Pane {
     Terrain,
     Budgets,
     Link,
+    Downlink,
+    Rewind,
 }
 
 impl ViewerApp {
@@ -76,12 +194,55 @@ impl ViewerApp {
             frame: 0,
             send_min: 0.0,
             now_min: 0.0,
+            downlink_path: None,
+            downlink_len: 0,
+            downlink: Downlink::default(),
+            mars: None,
+            rewind: 0,
+        }
+    }
+
+    /// Attach the Mars flow: enables the Rewind pane and the rover readout.
+    #[must_use]
+    pub fn with_mars(mut self, mars: MarsView) -> Self {
+        self.mars = Some(mars);
+        self
+    }
+
+    /// Follow the CCSDS capture at `path`, re-decoding it as it grows.
+    ///
+    /// # Errors
+    /// Returns an error if the capture cannot be read at start-up.
+    pub fn following(mut self, path: PathBuf) -> Result<Self, Box<dyn Error>> {
+        let bytes = std::fs::read(&path)?;
+        self.downlink_len = bytes.len() as u64;
+        self.downlink = telemetry::decode_stream(&bytes);
+        self.downlink_path = Some(path);
+        Ok(self)
+    }
+
+    /// Re-decode the followed capture if its length has changed.
+    fn follow_downlink(&mut self, ctx: &egui::Context) {
+        let Some(path) = self.downlink_path.clone() else {
+            return;
+        };
+        ctx.request_repaint_after(FOLLOW_EVERY);
+        let Ok(meta) = std::fs::metadata(&path) else {
+            return;
+        };
+        if meta.len() == self.downlink_len {
+            return;
+        }
+        if let Ok(bytes) = std::fs::read(&path) {
+            self.downlink_len = bytes.len() as u64;
+            self.downlink = telemetry::decode_stream(&bytes);
         }
     }
 }
 
 impl eframe::App for ViewerApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.follow_downlink(ctx);
         let samples = self
             .replay
             .orbit
@@ -101,6 +262,8 @@ impl eframe::App for ViewerApp {
                     (Pane::Terrain, "Terrain"),
                     (Pane::Budgets, "Budgets"),
                     (Pane::Link, "Link"),
+                    (Pane::Downlink, "Downlink"),
+                    (Pane::Rewind, "Rewind"),
                 ] {
                     if ui
                         .selectable_label(self.selected_pane == pane, label)
@@ -122,6 +285,8 @@ impl eframe::App for ViewerApp {
             Pane::Terrain => self.draw_terrain(ui),
             Pane::Budgets => self.draw_budgets(ui),
             Pane::Link => self.draw_link(ui),
+            Pane::Downlink => self.draw_downlink(ui),
+            Pane::Rewind => self.draw_rewind(ui),
         });
     }
 }
@@ -344,8 +509,8 @@ impl ViewerApp {
             "one-way light time {:.0} s; the operator clock is in minutes",
             profile.link.one_way_delay_s
         ));
-        ui.add(egui::Slider::new(&mut self.send_min, 0.0..=240.0).text("command sent at (min)"));
-        ui.add(egui::Slider::new(&mut self.now_min, 0.0..=240.0).text("readout at (min)"));
+        ui.add(egui::Slider::new(&mut self.send_min, 0.0..=600.0).text("command sent at (min)"));
+        ui.add(egui::Slider::new(&mut self.now_min, 0.0..=600.0).text("readout at (min)"));
         ui.separator();
         ui.monospace(format!(
             "arrives at  {:>8.2} min\nknown at    {:>8.2} min",
@@ -353,6 +518,73 @@ impl ViewerApp {
             timing.result_known_us as f64 / 60e6,
         ));
         ui.label(cue_text(&timing, now_us));
+        if let Some(mars) = &self.mars {
+            ui.separator();
+            ui.strong("predicted vs confirmed (rover)");
+            ui.label(prediction_text(
+                mars,
+                f64::from(self.now_min) * 60.0,
+                profile.link.one_way_delay_s,
+            ));
+        }
+    }
+
+    /// The downlink pane: the newest decoded packet per APID.
+    fn draw_downlink(&mut self, ui: &mut egui::Ui) {
+        let Some(path) = &self.downlink_path else {
+            ui.label("No downlink capture. Start the viewer with --ccsds FILE to follow one.");
+            return;
+        };
+        ui.heading(format!("following {}", path.display()));
+        ui.label(format!(
+            "{} packet(s), {} not decoded",
+            self.downlink.packets, self.downlink.undecoded
+        ));
+        if let Some(why) = &self.downlink.stopped {
+            ui.colored_label(egui::Color32::LIGHT_RED, format!("stream stops: {why}"));
+        }
+        ui.separator();
+        for packet in &self.downlink.latest {
+            ui.monospace(format!("{} (apid {:#05x})", packet.name, packet.apid));
+            for field in &packet.fields {
+                ui.monospace(format!(
+                    "    {:<14} {:>10.3} {}",
+                    field.name, field.value, field.unit
+                ));
+            }
+        }
+    }
+
+    /// The rewind pane: restore a checkpoint and show the run up to it.
+    fn draw_rewind(&mut self, ui: &mut egui::Ui) {
+        let Some(mars) = &self.mars else {
+            ui.label("Rewind needs the Mars flow: start the viewer without a replay file.");
+            return;
+        };
+        let last = mars.checkpoints.len().saturating_sub(1);
+        self.rewind = self.rewind.min(last);
+        ui.add(egui::Slider::new(&mut self.rewind, 0..=last).text("checkpoint"));
+        let Some(cp) = mars.checkpoints.get(self.rewind) else {
+            return;
+        };
+        let Some(ctx) = cp.restore() else {
+            ui.colored_label(egui::Color32::LIGHT_RED, "this checkpoint image is corrupt");
+            return;
+        };
+        ui.heading(format!("after {}", cp.label));
+        ui.monospace(format!("sim time     {:>8} s", ctx.t_s));
+        ui.monospace(format!("mission      {}", mission_name(ctx.mission_state)));
+        ui.monospace(format!("safe mode    {}", ctx.safe_mode));
+        ui.monospace(format!("delivered    {} bundle(s)", ctx.bundles_delivered));
+        ui.separator();
+        ui.label("timeline up to here");
+        for e in mars
+            .events
+            .iter()
+            .filter(|e| e.t_s < f64::from(ctx.t_s) + 1.0)
+        {
+            ui.monospace(format!("{:>10.1} s  [{}] {}", e.t_s, e.phase, e.detail));
+        }
     }
 
     fn draw_budgets(&mut self, ui: &mut egui::Ui) {
@@ -426,6 +658,49 @@ fn trace(ui: &mut egui::Ui, label: &str, data: &[f32], cursor: usize, color: egu
     );
 }
 
+/// The light-time readout for the rover at `now_s`: what the operator can
+/// predict from the newest state it holds, set against the rover's true pose.
+///
+/// That state was stamped one light time ago, and the predictive display
+/// refuses to extrapolate past its horizon, so on the Mars link there is
+/// usually no prediction to compare. The readout says so rather than
+/// showing a guess.
+fn prediction_text(mars: &MarsView, now_s: f64, one_way_s: f64) -> String {
+    let state_s = now_s - one_way_s;
+    let xyz = mars.pose_at(state_s);
+    let before = mars.pose_at(state_s - TRAVERSE_STEP_S);
+    let vel = [0, 1, 2].map(|i| ((xyz[i] - before[i]) / TRAVERSE_STEP_S) as f32);
+    let mut display = PredictiveDisplay::new(0.01);
+    display.ingest(xyz, vel, 0.0, 0.0, to_us(state_s));
+    match display.predict(to_us(now_s)) {
+        Err(e) => format!("no prediction: {e}. The newest state is {one_way_s:.0} s old."),
+        Ok(pose) => {
+            let d = divergence(&pose, mars.pose_at(now_s));
+            format!(
+                "predicted {:.2} m from the rover's true position, {} its 1σ bubble",
+                d.distance_m,
+                if d.within_bubble { "inside" } else { "outside" },
+            )
+        }
+    }
+}
+
+fn to_us(seconds: f64) -> u64 {
+    (seconds.max(0.0) * 1e6) as u64
+}
+
+fn mission_name(code: u8) -> &'static str {
+    match code {
+        0 => "cruise",
+        1 => "approach",
+        2 => "operations",
+        3 => "safe mode",
+        4 => "fault",
+        5 => "teleop",
+        _ => "unknown",
+    }
+}
+
 /// Rotation matrix (row-major) of a unit quaternion `[w, x, y, z]`.
 fn quat_to_matrix(q: [f32; 4]) -> [[f32; 3]; 3] {
     let [w, x, y, z] = q;
@@ -454,4 +729,87 @@ fn mat_vec(m: &[[f32; 3]; 3], v: [f32; 3]) -> [f32; 3] {
         m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2],
         m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2],
     ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn args(v: &[&str]) -> Vec<String> {
+        v.iter().map(|s| (*s).to_owned()).collect()
+    }
+
+    fn track(points: &[[f32; 2]], traverse_start_s: f64) -> MarsView {
+        MarsView {
+            checkpoints: Vec::new(),
+            events: Vec::new(),
+            traverse_start_s,
+            track_m: points.to_vec(),
+        }
+    }
+
+    #[test]
+    fn options_take_a_replay_and_a_capture() {
+        let opts = parse_args(args(&["run.replay", "--ccsds", "downlink.bin"])).expect("parses");
+        assert_eq!(
+            opts,
+            Options {
+                replay: Some(PathBuf::from("run.replay")),
+                downlink: Some(PathBuf::from("downlink.bin")),
+            }
+        );
+    }
+
+    #[test]
+    fn options_reject_unknown_flags_missing_values_and_two_replays() {
+        assert!(
+            parse_args(args(&["--verbose"]))
+                .unwrap_err()
+                .contains("unknown option")
+        );
+        assert!(
+            parse_args(args(&["--ccsds"]))
+                .unwrap_err()
+                .contains("needs a file")
+        );
+        assert!(
+            parse_args(args(&["a.replay", "b.replay"]))
+                .unwrap_err()
+                .contains("only one")
+        );
+    }
+
+    #[test]
+    fn the_rover_is_where_it_was_last_seen_outside_the_traverse() {
+        let m = track(&[[0.0, 0.0], [0.1, 0.0], [0.2, 0.05]], 100.0);
+        let near = |p: [f64; 3], want: [f64; 2]| {
+            (p[0] - want[0]).abs() < 1e-6 && (p[1] - want[1]).abs() < 1e-6 && p[2] == 0.0
+        };
+        assert!(near(m.pose_at(50.0), [0.0, 0.0]));
+        // Mid-interval, so floating-point rounding cannot pick the neighbour.
+        assert!(near(m.pose_at(100.15), [0.1, 0.0]));
+        assert!(near(m.pose_at(900.0), [0.2, 0.05]));
+    }
+
+    #[test]
+    fn a_light_time_past_the_horizon_leaves_no_prediction() {
+        let m = track(&[[0.0, 0.0], [0.1, 0.0]], 0.0);
+        let text = prediction_text(&m, 1_000.0, 720.0);
+        assert!(text.starts_with("no prediction"), "{text}");
+        assert!(text.contains("720 s old"), "{text}");
+    }
+
+    #[test]
+    fn a_short_light_time_predicts_the_rover_position() {
+        let m = track(&[[0.0, 0.0], [0.1, 0.0], [0.2, 0.0], [0.3, 0.0]], 0.0);
+        let text = prediction_text(&m, 0.2, 0.1);
+        assert!(text.starts_with("predicted"), "{text}");
+        assert!(text.contains("1σ bubble"), "{text}");
+    }
+
+    #[test]
+    fn mission_codes_have_names_and_unknowns_are_marked() {
+        assert_eq!(mission_name(3), "safe mode");
+        assert_eq!(mission_name(9), "unknown");
+    }
 }

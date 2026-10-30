@@ -1,27 +1,35 @@
 //! The visualizer binary.
 //!
-//! `tpt-t-space-visualizer [REPLAY]` — open a replay file written by
-//! `tpts orbit` or `tpts scenario mars`, or the sim's demo replay when no
-//! file is given.
-
-use std::path::PathBuf;
+//! `tpt-t-space-visualizer [REPLAY] [--ccsds FILE]` — open a replay file
+//! written by `tpts orbit` or `tpts scenario mars`, or the demo when no file
+//! is given. `--ccsds FILE` follows a CCSDS downlink capture as it grows.
 
 use eframe::egui;
-use tpt_t_space_visualizer::{ViewerApp, load_replay};
+use tpt_t_space_visualizer::{ViewerApp, load, parse_args};
+
+fn fail(msg: impl std::fmt::Display) -> ! {
+    eprintln!("tpt-t-space-visualizer: {msg}");
+    std::process::exit(2);
+}
 
 fn main() -> eframe::Result {
-    let path = std::env::args_os().nth(1).map(PathBuf::from);
-    let replay = match load_replay(path.as_deref()) {
-        Ok(r) => r,
-        Err(e) => {
-            eprintln!("tpt-t-space-visualizer: {e}");
-            std::process::exit(2);
-        }
-    };
-    let source = path.as_deref().and_then(|p| p.file_name()).map_or_else(
-        || "demo replay".to_owned(),
-        |n| n.to_string_lossy().into_owned(),
-    );
+    let opts = parse_args(std::env::args().skip(1)).unwrap_or_else(|e| fail(e));
+    let loaded = load(opts.replay.as_deref()).unwrap_or_else(|e| fail(e));
+    let source = opts
+        .replay
+        .as_deref()
+        .and_then(|p| p.file_name())
+        .map_or_else(
+            || "demo replay".to_owned(),
+            |n| n.to_string_lossy().into_owned(),
+        );
+    let mut app = ViewerApp::new(loaded.replay, source);
+    if let Some(mars) = loaded.mars {
+        app = app.with_mars(mars);
+    }
+    if let Some(path) = opts.downlink {
+        app = app.following(path).unwrap_or_else(|e| fail(e));
+    }
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1024.0, 640.0])
@@ -31,6 +39,6 @@ fn main() -> eframe::Result {
     eframe::run_native(
         "tpt-teleop-space",
         options,
-        Box::new(move |_cc| Ok(Box::new(ViewerApp::new(replay, source)))),
+        Box::new(move |_cc| Ok(Box::new(app))),
     )
 }

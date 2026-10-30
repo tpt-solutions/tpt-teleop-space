@@ -3114,6 +3114,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-t-space-ccsds"
+version = "1.0.0"
+
+[[package]]
 name = "tpt-t-space-core"
 version = "1.0.0"
 dependencies = [
@@ -3155,6 +3159,7 @@ dependencies = [
 name = "tpt-t-space-sim"
 version = "1.0.0"
 dependencies = [
+ "rkyv",
  "tpt-t-space-core",
  "tpt-t-space-dtn",
  "tpt-t-space-power",
@@ -3185,6 +3190,7 @@ name = "tpt-t-space-visualizer"
 version = "1.0.0"
 dependencies = [
  "eframe",
+ "tpt-t-space-ccsds",
  "tpt-t-space-core",
  "tpt-t-space-sim",
  "tpt-t-space-teleop",
