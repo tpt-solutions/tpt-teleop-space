@@ -254,20 +254,45 @@ bring-up → hardening/release.
 > units, radiation beam time) is not casually accessible — scope this phase
 > to COTS rad-tolerant dev boards and facility access as it becomes
 > available, rather than assuming real flight hardware.
-- [ ] COTS rad-tolerant dev board bring-up (e.g. LEON3 GR712RC eval board or (pending hardware/facility: no in-repo evidence)
-      a rad-hard-adjacent ARM Cortex-R eval kit) replacing sim-only targets
-- [ ] Real hardware watchdog wiring + feed-loop validation on target board (pending hardware/facility: no in-repo evidence)
-- [ ] Radiation test campaign (heavy-ion or proton beam, third-party (pending hardware/facility: no in-repo evidence)
+>
+> Every item below stays open until it is run on the real part. The
+> simulation rig (`tpt-t-space-hil`, run with `tpts hil`) exercises the same
+> logic against models of the missing hardware. Its results are simulation
+> evidence, and none of them closes an item.
+- [ ] COTS rad-tolerant dev board bring-up (e.g. LEON3 GR712RC eval board or
+      a rad-hard-adjacent ARM Cortex-R eval kit) replacing sim-only targets.
+      Simulated: `tpts hil` [1] runs a march test, kick-register check and
+      NVRAM restore on a model board, and catches an injected stuck-at bit.
+      Pending hardware/facility: no in-repo evidence from a real board
+- [ ] Real hardware watchdog wiring + feed-loop validation on target board.
+      Simulated: `tpts hil` [2] drives the real watchdog from a modelled loop.
+      A 4 s freeze bites and latches its cause; a 1 s freeze and a runaway
+      loop do not bite. Pending hardware/facility: no in-repo evidence
+- [ ] Radiation test campaign (heavy-ion or proton beam, third-party
       facility) validating the TMR voter and memory scrubber against real
-      SEU rates — flagged as facility/funding-dependent, pursue when
-      available
-- [ ] Hardware-in-the-loop validation for ADCS timing against a real star (pending hardware/facility: no in-repo evidence)
-      tracker/IMU/sun sensor stack
-- [ ] Real DTN link testing over a simulated light-time-delay test rig (pending hardware/facility: no in-repo evidence)
-- [ ] Target embedded platform performance validation against every spec'd (pending hardware/facility: no in-repo evidence)
-      latency budget on real silicon
-- [ ] Extreme-environment validation (thermal vacuum chamber, launch (pending hardware/facility: no in-repo evidence)
-      vibration profile) as facility access allows
+      SEU rates. Simulated: `tpts hil` [3] sweeps upset rate against scrub
+      period with the real scrubber. Double hits appear once the period
+      outlasts the upset spacing. The modelled rates are not measured ones.
+      Flagged as facility/funding-dependent, pursue when available
+- [ ] Hardware-in-the-loop validation for ADCS timing against a real star
+      tracker/IMU/sun sensor stack. Simulated: `tpts hil` [4] checks sensor
+      freshness against a 1 kHz loop, with transport latencies assumed, not
+      measured. The ADCS controller itself is nightly-only and not run.
+      Pending hardware/facility: no in-repo evidence
+- [ ] Real DTN link testing over a simulated light-time-delay test rig.
+      Simulated: `tpts hil` [5] runs commands and acks over the Mars
+      occultation profile, and the rover stores each command in the real
+      DTN agent. Pending hardware/facility: no in-repo evidence
+- [ ] Target embedded platform performance validation against every spec'd
+      latency budget on real silicon. Simulated: `tpts hil` [6] times the
+      TMR vote and the rover replan on the host, and reports how much slower
+      a target could be before each budget fails. The ADCS loop is not
+      measured here. Pending hardware/facility: no in-repo evidence
+- [ ] Extreme-environment validation (thermal vacuum chamber, launch
+      vibration profile) as facility access allows. Simulated: `tpts hil`
+      [7] cycles the battery channel through the real thermal subsystem and
+      counts Safe Mode trips. Vibration and vacuum are not modelled.
+      Pending hardware/facility: no in-repo evidence
 
 ## Phase 17 — Hardening, Docs & v1.0.0 Release
 - [x] `cargo clippy --workspace --all-targets -- -D warnings` clean
@@ -339,23 +364,31 @@ bring-up → hardening/release.
       tag-triggered CI release workflow
 
 ## Phase 20 — Innovation & Usability Features
-- [ ] Mission scenario files (TOML-free, custom minimal format) to declare — `tpts campaign run FILE` reads fault sweeps; link profiles and timelines not yet
-      link profiles, faults, and timelines, replayed deterministically by the
-      sim — shareable bug reproductions
-- [x] Fault-injection campaign runner: sweep SEU rate / blackout length / — SEU and blackout sweeps; dust-storm sweep not modeled (the power model cannot attenuate the array partway)
-      dust-storm depth over seeds, report Safe Mode entry and recovery stats
-- [ ] Light-time-aware operator UI cues: show command "arrives at / result — the visualizer's Link pane shows arrival and result-known times; predicted-vs-confirmed divergence is not in the UI yet
-      known at" timestamps and predicted-vs-confirmed state divergence
+- [x] Mission scenario files: `tpts scenario run FILE` replays a timeline
+      (link geometry, blackouts, SEU upsets, telemetry, Safe Mode, drain)
+      deterministically against the DTN store, TMR voter and black box;
+      example in `docs/scenarios/blackout-and-upset.scn`
+- [x] Fault-injection campaign runner: SEU and blackout sweeps, from the
+      command line or a `tpts campaign run FILE` scenario file. Dust-storm
+      sweep not modeled: the power model cannot attenuate the array partway
+- [x] Light-time-aware operator UI cues: the visualizer's Link pane shows
+      arrival and result-known times, and the predicted-vs-confirmed rover
+      readout. On the Mars link that readout reports no prediction: the
+      newest state is 720 s old, past the predictive display's 120 s horizon
 - [x] Sequence linter/dry-run: validate an uplink sequence against rover
       limits and the DEM/hazard model on the ground before uplink
-- [ ] Safe Mode black-box recorder: ring-buffer of last N transitions and — ring, CRC image, NVRAM restore, `tpts blackbox`; the Mars flow records transitions, Safe Mode and a bus event, and saves to NVRAM once at the end (not at each transition); the running mission's own bus is not wired
-      bus events persisted to NVRAM, with `tpts` decoder for post-mortem
-- [ ] Live telemetry dashboard in the visualizer (connect to a running sim — not started
-      or DTN downlink, not just replays)
-- [ ] Time-travel debugging: scrub/rewind the sim from the visualizer using — not started (replay scrubbing exists; rewinding a live sim needs snapshot integration)
-      periodic core snapshots
-- [ ] CCSDS packet-definition table (APID → named fields/units) driving — table and `tpts ccsds` decoding done; the visualizer does not take CCSDS input yet
-      auto-decoded telemetry in `tpts ccsds` and the visualizer
+- [x] Safe Mode black-box recorder: ring, CRC image, NVRAM restore,
+      `tpts blackbox`. The Mars flow's mission bus feeds the box, and the
+      NVRAM image is rewritten at every entry rather than once at the end
+- [x] Live telemetry dashboard: the visualizer's Downlink pane follows a
+      growing CCSDS capture (`--ccsds FILE`). It reads a file, not a socket
+      from a running sim
+- [x] Time-travel debugging: the visualizer's Rewind pane restores any
+      Mars-flow checkpoint from the core snapshot format. It rewinds a
+      recorded run; rewinding a live sim still needs checkpoints taken as
+      the sim runs
+- [x] CCSDS packet-definition table driving auto-decoded telemetry in
+      `tpts ccsds` and the visualizer's Downlink pane
 - [x] Mission-profile presets (LEO cubesat, Mars rover, GEO servicer) giving
       sane defaults for limits, thermal/power thresholds, and link profiles
 
