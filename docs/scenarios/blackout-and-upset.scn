@@ -1,0 +1,14 @@
+# Blackout, a radiation upset, and a Safe Mode entry, replayed against the
+# real DTN store, TMR voter and black box. Run with:
+#   tpts scenario run docs/scenarios/blackout-and-upset.scn
+#
+# No occultation here, so the drain delivers the backlog. Change `link` to
+# mars-surface to see the same backlog held behind the occultation instead.
+link none
+
+at 0      telemetry 4 48   # four bundles queued for Earth
+at 600    blackout 2       # link forced down for two hours
+at 700    telemetry 2 48   # two more, queued during the blackout
+at 1800   seu 1 20         # bit 20 of core 1 flips; the voter should mask it
+at 7200   safe-mode        # power-survival Safe Mode, recorded in the box
+at 8000   drain            # blackout over: hand the backlog to the link

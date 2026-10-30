@@ -8,6 +8,8 @@ and this crate adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ## [Unreleased]
 
 ### Added
+- Phase 20: `tpts scenario run FILE` replays a timeline scenario file, and
+  `tpts campaign run FILE` runs a sweep described by a file.
 - Phase 19: the `tpts` binary with `doctor`, `audit [--strict]`, `budgets`,
   `ccsds`, `orbit`, `scenario mars`, and `new`. Argument parsing is hand-rolled
   to keep the zero-dependency policy.

@@ -36,8 +36,11 @@ COMMANDS:
     profile [NAME]                          list mission-profile presets, or show one
     scenario mars [--out F]                 run the spec §6 Mars Sample Collection
                                             flow, print its timeline, write a replay
+    scenario run FILE                       replay a timeline file (link windows,
+                                            faults, telemetry) deterministically
     blackbox <hex|file>                     decode a Safe Mode black-box image
     campaign seu|blackout [--seeds N]       seeded fault-injection sweep (SEU rate, blackout length)
+    campaign run FILE                       the same sweep, with its parameters in a file
     seq <steps>                             lint an uplink sequence and dry-run it
                                             over the Mars terrain, e.g. 'drive 1; turn 90'
     new <rover|satellite|orbital> [--name N] scaffold a mission crate wired to core

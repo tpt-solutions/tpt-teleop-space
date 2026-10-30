@@ -8,6 +8,7 @@ use std::process::ExitCode;
 use tpt_t_space_sim::profile::{self, Profile};
 use tpt_t_space_sim::replay::Replay;
 use tpt_t_space_sim::scenario::{Event, leo_survey, mars_sample};
+use tpt_t_space_sim::script;
 
 use crate::{CliResult, flag_value, positional};
 
@@ -30,12 +31,42 @@ pub fn orbit(args: &[String]) -> CliResult {
     Ok(ExitCode::SUCCESS)
 }
 
+/// `tpts scenario run FILE` — replay a timeline scenario file and print what
+/// the DTN store, TMR voter and black box did with it.
+fn scenario_file(args: &[String]) -> CliResult {
+    let path = args
+        .iter()
+        .skip_while(|a| a.as_str() != "run")
+        .nth(1)
+        .ok_or("scenario run needs a scenario file")?;
+    let text = std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;
+    let report = script::run(&script::parse(&text)?)?;
+    for line in &report.lines {
+        println!("{line}");
+    }
+    println!();
+    println!(
+        "telemetry   {} accepted, {} refused",
+        report.accepted, report.dropped
+    );
+    println!("downlink    {} delivered", report.delivered);
+    println!(
+        "SEU         {} masked, {} detected, {} silent",
+        report.masked, report.detected, report.silent
+    );
+    println!("black box   {} record(s)", report.blackbox_records);
+    Ok(ExitCode::SUCCESS)
+}
+
 /// `tpts scenario mars [--out FILE]`.
 pub fn scenario(args: &[String]) -> CliResult {
-    match positional(args, &["--out"]) {
+    match positional(args, &["--out", "--blackbox"]) {
         Some("mars") => {}
-        Some(other) => return Err(format!("unknown scenario `{other}` (available: mars)")),
-        None => return Err("scenario needs a name (available: mars)".to_owned()),
+        Some("run") => return scenario_file(args),
+        Some(other) => {
+            return Err(format!("unknown scenario `{other}` (available: mars, run)"));
+        }
+        None => return Err("scenario needs a name (available: mars, run)".to_owned()),
     }
     let out = flag_value(args, "--out")?.unwrap_or("mars.replay");
 
